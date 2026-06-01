@@ -1,0 +1,70 @@
+# 1. Archivos de Entorno y Credenciales
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.env
+
+
+# 2. Compilación y Artefactos (Maven)
+# ==========================================
+target/
+*.jar
+*.war
+*.ear
+*.cprof
+*.class
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+HELP.md
+# Asegurar que no se suban reportes de empaquetado
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+pom.xml.versionsBackup
+release.properties
+
+
+# 3. IDEs y Editores
+# ==========================================
+# IntelliJ IDEA
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+/out/
+
+# Netbeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# VS Code
+.vscode/
+
+
+# 4. Sistema Operativo y Logs
+# ==========================================
+log/
+*.log
+logs/
+.DS_Store
+Thumbs.db
+crash.log
+
+
+# STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
