@@ -10,8 +10,12 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:4200")
 public class TestController {
 
-    @GetMapping("/api/test")
-    public ResponseEntity<Map<String, String>> testConnection() {
-        return ResponseEntity.ok(Map.of("message", "The backend is alive"));
+    @GetMapping("/api/handshake")
+    public ResponseEntity<Map<String, Object>> handshake() {
+        return ResponseEntity.ok(Map.of(
+                "status", "UP",
+                "app", "HiveHub Backend",
+                "databaseConnection", "OK"
+        ));
     }
 }
