@@ -15,7 +15,6 @@ public class TestController {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",
                 "app", "HiveHub Backend",
-                "databaseConnection", "OK"
-        ));
+                "databaseConnection", "OK"));
     }
 }
