@@ -4,7 +4,7 @@
 .env.local
 .env.*.local
 *.env
-
+application-local.properties
 
 # 2. Compilación y Artefactos (Maven)
 # ==========================================
@@ -68,3 +68,8 @@ crash.log
 .settings
 .springBeans
 .sts4-cache
+
+# IA / IDE configs
+.claude/
+.antigravity/
+.testsprite/

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 
 //En Java 21 usamos 'record' en lugar de 'class' para los DTOs.
@@ -21,7 +22,7 @@ public record OperacionSalaRequestDTO(
 
         // Este no tiene validaciones porque en un "INGRESO" a la sala, no hay kilos de
         // miel aún.
-        Double kilosMiel,
+        @Positive(message = "Los kilos de miel deben ser mayores a cero") Double kilosMiel,
 
         @NotBlank(message = "La temporada es obligatoria") String temporada
 
