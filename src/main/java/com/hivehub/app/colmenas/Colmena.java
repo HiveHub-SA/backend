@@ -1,7 +1,7 @@
-package com.hivehub.app.apiarios;
+package com.hivehub.app.colmenas;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.hivehub.app.colmenas.Colmena;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.hivehub.app.apiarios.Apiario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,13 +12,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Builder
-@Table(name = "apiario")
-public class Apiario {
+@Table(name = "colmena")
+public class Colmena {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,11 +29,10 @@ public class Apiario {
 
     private LocalDateTime createdAt;
 
-    private Double latitude;
+    @ManyToOne
+    @JoinColumn(name = "apiario", referencedColumnName = "id", nullable = true)
+    private Apiario apiario;
 
-    private Double longitude;
-
-    @OneToMany (mappedBy = "apiario", cascade = CascadeType.ALL)
-    private List<Colmena> colmenas = new ArrayList<>();
-
+    //@OneToMany (mappedBy = "id", cascade = CascadeType.ALL)
+    //private List<Inventario> inventario = new ArrayList<>();
 }

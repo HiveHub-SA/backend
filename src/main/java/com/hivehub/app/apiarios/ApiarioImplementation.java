@@ -19,6 +19,7 @@ public class ApiarioImplementation implements IApiarioService{
         return new ArrayList<>(repository.findAll());
     }
 
+    @Override
     public Apiario findById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Apiario with id " + id + " does not exist."));
