@@ -1,7 +1,5 @@
 package com.hivehub.app.colmenas;
 
-import com.hivehub.app.apiarios.Apiario;
-import com.hivehub.app.colmenas.IColmenaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

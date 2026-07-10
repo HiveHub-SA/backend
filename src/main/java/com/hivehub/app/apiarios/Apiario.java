@@ -1,6 +1,5 @@
 package com.hivehub.app.apiarios;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.hivehub.app.colmenas.Colmena;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
