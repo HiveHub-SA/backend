@@ -19,6 +19,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Handshake mapping as public
                         .requestMatchers("/api/handshake").permitAll()
+                        .requestMatchers("/hivehub/**").permitAll() //Line just to test the endpoints till we get done with the login
 
                         // Any other request will require authentication
                         .anyRequest().authenticated()
