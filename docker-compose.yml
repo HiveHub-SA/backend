@@ -6,14 +6,35 @@ services:
     restart: always
     container_name: hivehub-database
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-hivehub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-docenademiga}
+      POSTGRES_DB: ${DB_NAME:-hivehub_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
- 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: hivehub-app
+    restart: always
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-hivehub_db}
+      DB_USER: ${DB_USER:-hivehub}
+      DB_PASSWORD: ${DB_PASSWORD:-docenademiga}
+
 volumes:
   postgres_data:
     driver: local
