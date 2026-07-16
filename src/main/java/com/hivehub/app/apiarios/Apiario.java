@@ -31,7 +31,7 @@ public class Apiario {
 
     private Double longitude;
 
-    @OneToMany (mappedBy = "apiario", cascade = CascadeType.ALL)
+    @OneToMany (mappedBy = "apiario", cascade = CascadeType.ALL,  orphanRemoval = true)
     private List<Colmena> colmenas = new ArrayList<>();
 
 }
