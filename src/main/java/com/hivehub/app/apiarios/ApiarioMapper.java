@@ -25,6 +25,7 @@ public class ApiarioMapper {
                         .map(colmenaMapper::toDTO)
                         .toList()
                         :new ArrayList<>())
+                .regionId(apiario.getRegion() != null ? apiario.getRegion().getId() : null)
                 .build();
     }
 

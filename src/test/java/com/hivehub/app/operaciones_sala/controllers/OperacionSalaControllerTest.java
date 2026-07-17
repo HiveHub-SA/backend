@@ -9,6 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.hivehub.app.operaciones_sala.repositories.OperacionSalaRepository;
+import com.hivehub.app.regiones.Region;
+import com.hivehub.app.regiones.IRegionRepository;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -24,9 +26,25 @@ public class OperacionSalaControllerTest {
     @Autowired
     private OperacionSalaRepository repository;
 
+    @Autowired
+    private IRegionRepository regionRepository;
+
+    private Long regionId;
+
     @BeforeEach
     void setUp() {
         repository.deleteAll();
+        regionRepository.deleteAll();
+
+        // Creamos una región de prueba. Con inicio en mes 6 (Junio),
+        // la fecha 2026-07-10 (mes 7 >= 6) calculará temporada "2026/2027".
+        Region region = Region.builder()
+                .nombre("Región Test")
+                .inicioTemporadaMes(6)
+                .finTemporadaMes(3)
+                .build();
+        region = regionRepository.save(region);
+        regionId = region.getId();
     }
 
     @Test
@@ -35,6 +53,7 @@ public class OperacionSalaControllerTest {
 
         // 1. Obtener el resumen inicial
         mockMvc.perform(get("/api/hivehub/sala-extraccion/resumen")
+                .param("regionId", regionId.toString())
                 .param("temporada", temporada))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalMielExtraida", closeTo(0.0, 0.01)))
@@ -47,9 +66,9 @@ public class OperacionSalaControllerTest {
                     "fecha": "2026-07-10",
                     "tipoOperacion": "INGRESO",
                     "cantidadAlzas": 10,
-                    "temporada": "2026/2027"
+                    "regionId": %d
                 }
-                """;
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadIngreso))
@@ -61,12 +80,14 @@ public class OperacionSalaControllerTest {
 
         // 3. Validar que el resumen se actualice (alzas en espera deben ser 10)
         mockMvc.perform(get("/api/hivehub/sala-extraccion/resumen")
+                .param("regionId", regionId.toString())
                 .param("temporada", temporada))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alzasEnEspera", is(10)));
 
         // 4. Validar el historial
         mockMvc.perform(get("/api/hivehub/sala-extraccion/historial")
+                .param("regionId", regionId.toString())
                 .param("temporada", temporada))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
@@ -79,9 +100,9 @@ public class OperacionSalaControllerTest {
                     "tipoOperacion": "EXTRACCION",
                     "cantidadAlzas": 4,
                     "kilosMiel": 120.5,
-                    "temporada": "2026/2027"
+                    "regionId": %d
                 }
-                """;
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadExtraccion))
@@ -95,6 +116,7 @@ public class OperacionSalaControllerTest {
         // - Alzas procesadas aumentan en 4
         // - Kilos de miel aumentan en 120.5
         mockMvc.perform(get("/api/hivehub/sala-extraccion/resumen")
+                .param("regionId", regionId.toString())
                 .param("temporada", temporada))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alzasEnEspera", is(6)))
@@ -104,8 +126,6 @@ public class OperacionSalaControllerTest {
 
     @Test
     void testRobustezValidaciones() throws Exception {
-        String temporada = "2026/2027";
-
         // 1. Enviar payload vacío
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -118,9 +138,9 @@ public class OperacionSalaControllerTest {
                     "fecha": "2026-07-10",
                     "tipoOperacion": "INGRESO",
                     "cantidadAlzas": 0,
-                    "temporada": "%s"
+                    "regionId": %d
                 }
-                """.formatted(temporada);
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadCero))
@@ -132,9 +152,9 @@ public class OperacionSalaControllerTest {
                     "fecha": "2026-07-10",
                     "tipoOperacion": "INGRESO",
                     "cantidadAlzas": -5,
-                    "temporada": "%s"
+                    "regionId": %d
                 }
-                """.formatted(temporada);
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadNegativo))
@@ -146,26 +166,25 @@ public class OperacionSalaControllerTest {
                     "fecha": "2026-07-10",
                     "tipoOperacion": "ROBO",
                     "cantidadAlzas": 5,
-                    "temporada": "%s"
+                    "regionId": %d
                 }
-                """.formatted(temporada);
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadInvalido))
                 .andExpect(status().isBadRequest());
 
-        // 5. Temporada vacía
-        String payloadTempVacia = """
+        // 5. RegionId nulo
+        String payloadRegionIdNulo = """
                 {
                     "fecha": "2026-07-10",
                     "tipoOperacion": "INGRESO",
-                    "cantidadAlzas": 5,
-                    "temporada": "   "
+                    "cantidadAlzas": 5
                 }
                 """;
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(payloadTempVacia))
+                .content(payloadRegionIdNulo))
                 .andExpect(status().isBadRequest());
 
         // 6. Formato de fecha incorrecto
@@ -174,9 +193,9 @@ public class OperacionSalaControllerTest {
                     "fecha": "10-07-2026",
                     "tipoOperacion": "INGRESO",
                     "cantidadAlzas": 5,
-                    "temporada": "%s"
+                    "regionId": %d
                 }
-                """.formatted(temporada);
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadFechaInvalida))
@@ -188,9 +207,9 @@ public class OperacionSalaControllerTest {
                     "fecha": "2026-07-10",
                     "tipoOperacion": "INGRESO",
                     "cantidadAlzas": "diez",
-                    "temporada": "%s"
+                    "regionId": %d
                 }
-                """.formatted(temporada);
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadTipadoInvalido))
@@ -203,9 +222,9 @@ public class OperacionSalaControllerTest {
                     "tipoOperacion": "EXTRACCION",
                     "cantidadAlzas": 5,
                     "kilosMiel": -250.0,
-                    "temporada": "%s"
+                    "regionId": %d
                 }
-                """.formatted(temporada);
+                """.formatted(regionId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadMielNegativa))

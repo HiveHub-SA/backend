@@ -2,6 +2,7 @@ package com.hivehub.app.apiarios;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +13,32 @@ import java.util.List;
 public class ApiarioImplementation implements IApiarioService{
 
     private final IApiarioRepository repository;
+    private final com.hivehub.app.regiones.IRegionRepository regionRepository;
+
+    @PostConstruct
+    public void init() {
+        if (repository.count() == 0) {
+            com.hivehub.app.regiones.Region defaultRegion = regionRepository.findAll().stream().findFirst().orElse(null);
+            if (defaultRegion != null) {
+                Apiario apiario1 = Apiario.builder()
+                        .name("Apiario El Ceibo")
+                        .latitude(-34.6037)
+                        .longitude(-58.3816)
+                        .createdAt(LocalDateTime.now())
+                        .region(defaultRegion)
+                        .build();
+                Apiario apiario2 = Apiario.builder()
+                        .name("Apiario Las Margaritas")
+                        .latitude(-34.6137)
+                        .longitude(-58.3916)
+                        .createdAt(LocalDateTime.now())
+                        .region(defaultRegion)
+                        .build();
+                repository.save(apiario1);
+                repository.save(apiario2);
+            }
+        }
+    }
 
     @Override
     public List<Apiario> findAll() {
@@ -38,6 +65,12 @@ public class ApiarioImplementation implements IApiarioService{
             apiario.setCreatedAt(LocalDateTime.now());
         }
 
+        if (apiario.getRegion() == null) {
+            // Se le asigna la región por defecto (la primera que exista)
+            com.hivehub.app.regiones.Region defaultRegion = regionRepository.findAll().stream().findFirst().orElse(null);
+            apiario.setRegion(defaultRegion);
+        }
+
         return repository.save(apiario);
     }
 
@@ -60,6 +93,10 @@ public class ApiarioImplementation implements IApiarioService{
 
         if (updatedApiario.getLongitude() != null) {
             existingApiario.setLongitude(updatedApiario.getLongitude());
+        }
+
+        if (updatedApiario.getRegion() != null) {
+            existingApiario.setRegion(updatedApiario.getRegion());
         }
 
         return save(existingApiario);

@@ -20,4 +20,5 @@ public class ApiarioDTO {
     private Double latitude;
     private Double longitude;
     private List<ColmenaDTO> colmenas;
+    private Long regionId;
 }

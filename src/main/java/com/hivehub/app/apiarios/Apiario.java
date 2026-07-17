@@ -34,4 +34,7 @@ public class Apiario {
     @OneToMany (mappedBy = "apiario", cascade = CascadeType.ALL)
     private List<Colmena> colmenas = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "region_id", nullable = true)
+    private com.hivehub.app.regiones.Region region;
 }

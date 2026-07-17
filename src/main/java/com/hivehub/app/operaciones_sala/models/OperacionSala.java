@@ -2,6 +2,10 @@ package com.hivehub.app.operaciones_sala.models;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.ArrayList;
+import com.hivehub.app.apiarios.Apiario;
+import com.hivehub.app.regiones.Region;
 
 @Entity // Spring crea una tabla
 @Table(name = "operaciones_sala") // Nombre de la tabla en SQL
@@ -25,6 +29,18 @@ public class OperacionSala {
 
     @Column(nullable = false)
     private String temporada;
+
+    @ManyToMany
+    @JoinTable(
+        name = "operacion_sala_apiario",
+        joinColumns = @JoinColumn(name = "operacion_sala_id"),
+        inverseJoinColumns = @JoinColumn(name = "apiario_id")
+    )
+    private List<Apiario> apiarios = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "region_id", nullable = true)
+    private Region region;
 
     // --- Constructor Vacío (Obligatorio para Spring Boot) ---
     public OperacionSala() {
@@ -77,5 +93,21 @@ public class OperacionSala {
 
     public void setTemporada(String temporada) {
         this.temporada = temporada;
+    }
+
+    public List<Apiario> getApiarios() {
+        return apiarios;
+    }
+
+    public void setApiarios(List<Apiario> apiarios) {
+        this.apiarios = apiarios;
+    }
+
+    public Region getRegion() {
+        return region;
+    }
+
+    public void setRegion(Region region) {
+        this.region = region;
     }
 }
