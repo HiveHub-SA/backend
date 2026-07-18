@@ -16,4 +16,10 @@ public class ColmenaDTO {
     private String name;
     private Long apiarioId;
     private LocalDateTime createdAt;
+    
+    // Composicion de la colmena
+    private Integer camaras;
+    private Integer alzas;
+    private Integer marcosAlza;
+    private Integer nucleos;
 }

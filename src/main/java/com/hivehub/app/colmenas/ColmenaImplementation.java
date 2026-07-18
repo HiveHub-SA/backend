@@ -1,12 +1,16 @@
 package com.hivehub.app.colmenas;
 
 import com.hivehub.app.apiarios.IApiarioRepository;
+import com.hivehub.app.domain.Inventario;
+import com.hivehub.app.repository.InventarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.hivehub.app.domain.TipoDeInventario;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +18,8 @@ public class ColmenaImplementation implements IColmenaService{
 
     private final IColmenaRepository repository;
     private final IApiarioRepository apiarioRepository;
+    private final InventarioRepository inventarioRepository;
+    private final com.hivehub.app.repository.TipoDeInventarioRepository tipoInventarioRepository;
 
     @Override
     public List<Colmena> findAll() {
@@ -72,6 +78,7 @@ public class ColmenaImplementation implements IColmenaService{
         repository.deleteById(id);
     }
 
+    @Transactional
     @Override
     public Colmena saveDTO(ColmenaDTO colmenaDTO) {
         if (colmenaDTO.getName() == null) {
@@ -90,11 +97,18 @@ public class ColmenaImplementation implements IColmenaService{
                 .apiario(apiario)
                 .createdAt(colmenaDTO.getCreatedAt() != null ? colmenaDTO.getCreatedAt() : LocalDateTime.now())
                 .build();
-
-        return repository.save(colmena);
+        Colmena savedColmena = repository.save(colmena);
+        
+        actualizarInventarioColmena(savedColmena, "Colmena", colmenaDTO.getCamaras(), null);
+        actualizarInventarioColmena(savedColmena, "Alza", colmenaDTO.getAlzas(), colmenaDTO.getMarcosAlza());
+        actualizarInventarioColmena(savedColmena, "Núcleo", colmenaDTO.getNucleos(), null);
+        
+        return savedColmena;    
     }
 
-    @Override public Colmena updateDTO(long id, ColmenaDTO colmenaDTO) {
+    @Transactional
+    @Override 
+    public Colmena updateDTO(long id, ColmenaDTO colmenaDTO) {
         Colmena existingColmena = this.findById(id);
 
         if (colmenaDTO.getName() != null) {
@@ -107,6 +121,80 @@ public class ColmenaImplementation implements IColmenaService{
             existingColmena.setApiario(apiario);
         }
 
-        return save(existingColmena);
+        Colmena savedColmena = save(existingColmena);
+        
+        actualizarInventarioColmena(savedColmena, "Colmena", colmenaDTO.getCamaras(), null);
+        actualizarInventarioColmena(savedColmena, "Alza", colmenaDTO.getAlzas(), colmenaDTO.getMarcosAlza());
+        actualizarInventarioColmena(savedColmena, "Núcleo", colmenaDTO.getNucleos(), null);
+        
+        return savedColmena;
+    }
+
+    private void actualizarInventarioColmena(Colmena colmena, String tipoNombre, Integer cantidadDeseada, Integer marcos) {
+        if (cantidadDeseada == null || colmena.getId() == null) return;
+
+        TipoDeInventario tipoObjetivo = null;
+        if (marcos != null) {
+            tipoObjetivo = tipoInventarioRepository.findByNombreIgnoreCaseAndCantidadMarcos(tipoNombre, marcos)
+                    .orElseGet(() -> {
+                        TipoDeInventario nuevoTipo = TipoDeInventario.builder()
+                                .nombre(tipoNombre)
+                                .cantidadMarcos(marcos)
+                                .build();
+                        return tipoInventarioRepository.save(nuevoTipo);
+                    });
+        } else {
+            tipoObjetivo = tipoInventarioRepository.findByNombreIgnoreCase(tipoNombre)
+                    .orElseGet(() -> {
+                        TipoDeInventario nuevoTipo = TipoDeInventario.builder()
+                                .nombre(tipoNombre)
+                                .cantidadMarcos(null)
+                                .build();
+                        return tipoInventarioRepository.save(nuevoTipo);
+                    });
+        }
+        
+        List<Inventario> asignados = inventarioRepository.findByColmenaIdAndTipoInventarioNombreIgnoreCase(colmena.getId(), tipoNombre);
+        int currentCount = asignados.size();
+        
+        if (cantidadDeseada > currentCount) {
+            int toAdd = cantidadDeseada - currentCount;
+            List<Inventario> disponibles = inventarioRepository.findByColmenaIsNullAndTipoInventarioNombreIgnoreCase(tipoNombre);
+            if (disponibles.size() < toAdd) {
+                throw new IllegalArgumentException("No hay suficiente material suelto disponible para: " + tipoNombre);
+            }
+            for (int i = 0; i < toAdd; i++) {
+                Inventario inv = disponibles.get(i);
+                inv.setColmena(colmena);
+                if (tipoObjetivo != null) {
+                    inv.setTipoInventario(tipoObjetivo);
+                }
+                inventarioRepository.save(inv);
+                if (colmena.getInventarios() == null) {
+                    colmena.setInventarios(new ArrayList<>());
+                }
+                colmena.getInventarios().add(inv);
+            }
+        } else if (cantidadDeseada < currentCount) {
+            int toRemove = currentCount - cantidadDeseada;
+            for (int i = 0; i < toRemove; i++) {
+                Inventario inv = asignados.get(i);
+                inv.setColmena(null);
+                inventarioRepository.save(inv);
+                if (colmena.getInventarios() != null) {
+                    colmena.getInventarios().remove(inv);
+                }
+            }
+        }
+
+        if (tipoObjetivo != null && cantidadDeseada > 0) {
+            List<Inventario> restantes = inventarioRepository.findByColmenaIdAndTipoInventarioNombreIgnoreCase(colmena.getId(), tipoNombre);
+            for (Inventario inv : restantes) {
+                if (!inv.getTipoInventario().getId().equals(tipoObjetivo.getId())) {
+                    inv.setTipoInventario(tipoObjetivo);
+                    inventarioRepository.save(inv);
+                }
+            }
+        }
     }
 }
