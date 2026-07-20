@@ -6,6 +6,5 @@ import com.hivehub.app.operaciones_sala.models.OperacionSala;
 import java.util.List;
 @Repository
 public interface OperacionSalaRepository extends JpaRepository<OperacionSala, Long> {
-    List<OperacionSala> findByRegionIdAndTemporadaOrderByFechaDesc(Long regionId, String temporada);
     List<OperacionSala> findByTemporadaOrderByFechaDesc(String temporada);
 }

@@ -28,15 +28,13 @@ public class OperacionSalaController {
 
     @GetMapping("/historial")
     public ResponseEntity<List<OperacionSalaResponseDTO>> getHistorial(
-            @RequestParam Long regionId,
             @RequestParam String temporada) {
-        return ResponseEntity.ok(service.obtenerHistorial(regionId, temporada));
+        return ResponseEntity.ok(service.obtenerHistorial(temporada));
     }
 
     @GetMapping("/resumen")
     public ResponseEntity<ResumenSalaResponseDTO> getResumen(
-            @RequestParam Long regionId,
             @RequestParam String temporada) {
-        return ResponseEntity.ok(service.obtenerResumen(regionId, temporada));
+        return ResponseEntity.ok(service.obtenerResumen(temporada));
     }
 }

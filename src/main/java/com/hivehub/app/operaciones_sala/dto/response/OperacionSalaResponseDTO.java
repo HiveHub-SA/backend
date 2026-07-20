@@ -10,7 +10,5 @@ public record OperacionSalaResponseDTO(
                 Integer cantidadAlzas,
                 Double kilosMiel,
                 String temporada,
-                Long regionId,
-                String regionNombre,
                 List<String> apiariosNombres) {
 }

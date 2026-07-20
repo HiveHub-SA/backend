@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,8 +19,6 @@ import com.hivehub.app.operaciones_sala.dto.response.OperacionSalaResponseDTO;
 import com.hivehub.app.operaciones_sala.dto.response.ResumenSalaResponseDTO;
 import com.hivehub.app.operaciones_sala.models.OperacionSala;
 import com.hivehub.app.operaciones_sala.repositories.OperacionSalaRepository;
-import com.hivehub.app.regiones.Region;
-import com.hivehub.app.regiones.IRegionRepository;
 import com.hivehub.app.apiarios.IApiarioRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,9 +28,6 @@ public class OperacionSalaServiceTest {
     private OperacionSalaRepository repository;
 
     @Mock
-    private IRegionRepository regionRepository;
-
-    @Mock
     private IApiarioRepository apiarioRepository;
 
     @InjectMocks
@@ -41,18 +35,11 @@ public class OperacionSalaServiceTest {
 
     @Test
     void testRegistrarOperacionIngreso() {
-        Region region = new Region();
-        region.setId(1L);
-        region.setNombre("Región General");
-        region.setInicioTemporadaMes(11);
-        region.setFinTemporadaMes(3);
-
         OperacionSalaRequestDTO request = new OperacionSalaRequestDTO(
             LocalDate.of(2026, 11, 10), // Mes 11 >= 11 -> Temporada 2026/2027
             "INGRESO",
             10,
             null,
-            1L,
             Collections.emptyList()
         );
 
@@ -63,9 +50,7 @@ public class OperacionSalaServiceTest {
         saved.setCantidadAlzas(request.cantidadAlzas());
         saved.setKilosMiel(request.kilosMiel());
         saved.setTemporada("2026/2027");
-        saved.setRegion(region);
 
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
         when(repository.save(any(OperacionSala.class))).thenReturn(saved);
 
         OperacionSalaResponseDTO response = service.registrarOperacion(request);
@@ -77,24 +62,16 @@ public class OperacionSalaServiceTest {
         assertNull(response.kilosMiel());
         assertEquals("2026/2027", response.temporada());
 
-        verify(regionRepository, times(1)).findById(1L);
         verify(repository, times(1)).save(any(OperacionSala.class));
     }
 
     @Test
     void testRegistrarOperacionExtraccion() {
-        Region region = new Region();
-        region.setId(1L);
-        region.setNombre("Región General");
-        region.setInicioTemporadaMes(11);
-        region.setFinTemporadaMes(3);
-
         OperacionSalaRequestDTO request = new OperacionSalaRequestDTO(
             LocalDate.of(2026, 11, 10), // Mes 11 >= 11 -> Temporada 2026/2027
             "EXTRACCION",
             4,
             120.5,
-            1L,
             Collections.emptyList()
         );
 
@@ -105,9 +82,14 @@ public class OperacionSalaServiceTest {
         saved.setCantidadAlzas(request.cantidadAlzas());
         saved.setKilosMiel(request.kilosMiel());
         saved.setTemporada("2026/2027");
-        saved.setRegion(region);
 
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
+        OperacionSala op1 = new OperacionSala();
+        op1.setTipoOperacion("INGRESO");
+        op1.setCantidadAlzas(10);
+
+        when(repository.findByTemporadaOrderByFechaDesc("2026/2027"))
+                .thenReturn(Collections.singletonList(op1));
+
         when(repository.save(any(OperacionSala.class))).thenReturn(saved);
 
         OperacionSalaResponseDTO response = service.registrarOperacion(request);
@@ -119,13 +101,35 @@ public class OperacionSalaServiceTest {
         assertEquals(120.5, response.kilosMiel());
         assertEquals("2026/2027", response.temporada());
 
-        verify(regionRepository, times(1)).findById(1L);
         verify(repository, times(1)).save(any(OperacionSala.class));
     }
 
     @Test
+    void testRegistrarOperacionExtraccionExcedeStock() {
+        OperacionSalaRequestDTO request = new OperacionSalaRequestDTO(
+            LocalDate.of(2026, 11, 10),
+            "EXTRACCION",
+            15,
+            120.5,
+            Collections.emptyList()
+        );
+
+        OperacionSala op1 = new OperacionSala();
+        op1.setTipoOperacion("INGRESO");
+        op1.setCantidadAlzas(10);
+
+        when(repository.findByTemporadaOrderByFechaDesc("2026/2027"))
+                .thenReturn(Collections.singletonList(op1));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.registrarOperacion(request);
+        });
+
+        verify(repository, never()).save(any(OperacionSala.class));
+    }
+
+    @Test
     void testObtenerHistorial() {
-        Long regionId = 1L;
         String temporada = "2026/2027";
         OperacionSala op = new OperacionSala();
         op.setId(1L);
@@ -134,20 +138,19 @@ public class OperacionSalaServiceTest {
         op.setCantidadAlzas(10);
         op.setTemporada(temporada);
 
-        when(repository.findByRegionIdAndTemporadaOrderByFechaDesc(regionId, temporada))
+        when(repository.findByTemporadaOrderByFechaDesc(temporada))
                 .thenReturn(Collections.singletonList(op));
 
-        List<OperacionSalaResponseDTO> historial = service.obtenerHistorial(regionId, temporada);
+        List<OperacionSalaResponseDTO> historial = service.obtenerHistorial(temporada);
 
         assertNotNull(historial);
         assertEquals(1, historial.size());
         assertEquals(1L, historial.get(0).id());
-        verify(repository, times(1)).findByRegionIdAndTemporadaOrderByFechaDesc(regionId, temporada);
+        verify(repository, times(1)).findByTemporadaOrderByFechaDesc(temporada);
     }
 
     @Test
     void testObtenerResumen() {
-        Long regionId = 1L;
         String temporada = "2026/2027";
 
         OperacionSala op1 = new OperacionSala();
@@ -160,10 +163,10 @@ public class OperacionSalaServiceTest {
         op2.setCantidadAlzas(4);
         op2.setKilosMiel(120.5);
 
-        when(repository.findByRegionIdAndTemporadaOrderByFechaDesc(regionId, temporada))
+        when(repository.findByTemporadaOrderByFechaDesc(temporada))
                 .thenReturn(Arrays.asList(op1, op2));
 
-        ResumenSalaResponseDTO resumen = service.obtenerResumen(regionId, temporada);
+        ResumenSalaResponseDTO resumen = service.obtenerResumen(temporada);
 
         assertNotNull(resumen);
         assertEquals(120.5, resumen.totalMielExtraida());

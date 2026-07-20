@@ -7,8 +7,7 @@ import com.hivehub.app.operaciones_sala.models.OperacionSala;
 import com.hivehub.app.operaciones_sala.repositories.OperacionSalaRepository;
 import com.hivehub.app.apiarios.Apiario;
 import com.hivehub.app.apiarios.IApiarioRepository;
-import com.hivehub.app.regiones.Region;
-import com.hivehub.app.regiones.IRegionRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,19 +21,18 @@ public class OperacionSalaService {
     @Autowired
     private OperacionSalaRepository repository;
 
-    @Autowired
-    private IRegionRepository regionRepository;
+
 
     @Autowired
     private IApiarioRepository apiarioRepository;
 
     /**
-     * Calcula la temporada a partir de la fecha y el mes de inicio de temporada de la región.
+     * Calcula la temporada a partir de la fecha (inicio por defecto en Noviembre).
      */
-    public String calcularTemporada(LocalDate fecha, Region region) {
+    public String calcularTemporada(LocalDate fecha) {
         int mes = fecha.getMonthValue();
         int anio = fecha.getYear();
-        int inicio = region.getInicioTemporadaMes();
+        int inicio = 11; // Noviembre por defecto
 
         if (mes >= inicio) {
             return anio + "/" + (anio + 1);
@@ -43,37 +41,18 @@ public class OperacionSalaService {
         }
     }
 
-    public boolean esFechaValidaParaRegion(LocalDate fecha, Region region) {
-        int mes = fecha.getMonthValue();
-        int inicio = region.getInicioTemporadaMes();
-        int fin = region.getFinTemporadaMes();
-
-        if (inicio <= fin) {
-            return mes >= inicio && mes <= fin;
-        } else {
-            return mes >= inicio || mes <= fin;
-        }
-    }
-
-    private String obtenerNombreMes(int mes) {
-        return java.time.Month.of(mes).getDisplayName(
-                java.time.format.TextStyle.FULL,
-                new java.util.Locale("es", "ES")
-        );
-    }
-
     /**
      * 1. REGISTRAR UNA OPERACIÓN
      */
     public OperacionSalaResponseDTO registrarOperacion(OperacionSalaRequestDTO request) {
-        Region region = regionRepository.findById(request.regionId())
-                .orElseThrow(() -> new IllegalArgumentException("La región con ID " + request.regionId() + " no existe."));
+        String temporadaCalculada = calcularTemporada(request.fecha());
 
-        if (!esFechaValidaParaRegion(request.fecha(), region)) {
-            throw new IllegalArgumentException("La fecha seleccionada (" + request.fecha() + ") está fuera de la temporada activa configurada para la región " + region.getNombre() + " (" + obtenerNombreMes(region.getInicioTemporadaMes()) + " a " + obtenerNombreMes(region.getFinTemporadaMes()) + ").");
+        if ("EXTRACCION".equals(request.tipoOperacion())) {
+            ResumenSalaResponseDTO resumen = obtenerResumen(temporadaCalculada);
+            if (request.cantidadAlzas() > resumen.alzasEnEspera()) {
+                throw new IllegalArgumentException("No se pueden procesar más alzas de las que están en espera en la sala. Alzas en espera disponibles: " + resumen.alzasEnEspera());
+            }
         }
-
-        String temporadaCalculada = calcularTemporada(request.fecha(), region);
 
         List<Apiario> apiarios = List.of();
         if (request.apiariosIds() != null && !request.apiariosIds().isEmpty()) {
@@ -87,7 +66,6 @@ public class OperacionSalaService {
         entidad.setCantidadAlzas(request.cantidadAlzas());
         entidad.setKilosMiel(request.kilosMiel());
         entidad.setTemporada(temporadaCalculada);
-        entidad.setRegion(region);
         entidad.setApiarios(apiarios);
 
         // Guardar en Base de Datos
@@ -99,8 +77,8 @@ public class OperacionSalaService {
     /**
      * 2. OBTENER EL HISTORIAL
      */
-    public List<OperacionSalaResponseDTO> obtenerHistorial(Long regionId, String temporada) {
-        List<OperacionSala> listaEntidades = repository.findByRegionIdAndTemporadaOrderByFechaDesc(regionId, temporada);
+    public List<OperacionSalaResponseDTO> obtenerHistorial(String temporada) {
+        List<OperacionSala> listaEntidades = repository.findByTemporadaOrderByFechaDesc(temporada);
 
         return listaEntidades.stream()
                 .map(this::mapearADto)
@@ -110,8 +88,8 @@ public class OperacionSalaService {
     /**
      * 3. CALCULAR EL RESUMEN
      */
-    public ResumenSalaResponseDTO obtenerResumen(Long regionId, String temporada) {
-        List<OperacionSala> operaciones = repository.findByRegionIdAndTemporadaOrderByFechaDesc(regionId, temporada);
+    public ResumenSalaResponseDTO obtenerResumen(String temporada) {
+        List<OperacionSala> operaciones = repository.findByTemporadaOrderByFechaDesc(temporada);
 
         int totalIngresadas = 0;
         int totalProcesadas = 0;
@@ -149,8 +127,6 @@ public class OperacionSalaService {
                 entidad.getCantidadAlzas(),
                 entidad.getKilosMiel(),
                 entidad.getTemporada(),
-                entidad.getRegion() != null ? entidad.getRegion().getId() : null,
-                entidad.getRegion() != null ? entidad.getRegion().getNombre() : null,
                 apiariosNombres
         );
     }

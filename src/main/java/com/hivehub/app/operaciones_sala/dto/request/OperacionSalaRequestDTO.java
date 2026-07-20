@@ -23,9 +23,6 @@ public record OperacionSalaRequestDTO(
         @Positive(message = "Los kilos de miel deben ser mayores a cero") 
         Double kilosMiel,
 
-        @NotNull(message = "La región es obligatoria")
-        Long regionId,
-
         List<Long> apiariosIds
 
 ) {
