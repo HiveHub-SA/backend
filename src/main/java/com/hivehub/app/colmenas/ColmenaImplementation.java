@@ -48,7 +48,7 @@ public class ColmenaImplementation implements IColmenaService{
 
         Colmena existingColmena = this.findById(id);
 
-        if (updatedColmena == null) {
+        if (existingColmena == null) {
             throw new IllegalArgumentException("Colmena with id " + id + " does not exist.");
         }
 
