@@ -2,6 +2,7 @@ package com.hivehub.app.apiarios;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +13,26 @@ import java.util.List;
 public class ApiarioImplementation implements IApiarioService{
 
     private final IApiarioRepository repository;
+
+    @PostConstruct
+    public void init() {
+        if (repository.count() == 0) {
+            Apiario apiario1 = Apiario.builder()
+                    .name("Apiario El Ceibo")
+                    .latitude(-34.6037)
+                    .longitude(-58.3816)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            Apiario apiario2 = Apiario.builder()
+                    .name("Apiario Las Margaritas")
+                    .latitude(-34.6137)
+                    .longitude(-58.3916)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            repository.save(apiario1);
+            repository.save(apiario2);
+        }
+    }
 
     @Override
     public List<Apiario> findAll() {
@@ -38,6 +59,7 @@ public class ApiarioImplementation implements IApiarioService{
             apiario.setCreatedAt(LocalDateTime.now());
         }
 
+
         return repository.save(apiario);
     }
 
@@ -61,6 +83,7 @@ public class ApiarioImplementation implements IApiarioService{
         if (updatedApiario.getLongitude() != null) {
             existingApiario.setLongitude(updatedApiario.getLongitude());
         }
+
 
         return save(existingApiario);
     }
