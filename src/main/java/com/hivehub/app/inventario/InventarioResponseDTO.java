@@ -1,9 +1,7 @@
-package com.hivehub.app.dto;
+package com.hivehub.app.inventario;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.hivehub.app.inventario.tipoInventario.TipoInventarioNombre;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
@@ -12,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class InventarioResponseDTO {
     private Long id;
     private Integer pesoInventario;
-    private String tipoNombre;
+    private TipoInventarioNombre tipoNombre;
     private Integer cantidadMarcos;
-    private Long colmenaId; // solo el ID, sin anidar la entidad completa
+    private Long colmenaId;
 }

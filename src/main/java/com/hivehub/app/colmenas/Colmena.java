@@ -1,6 +1,7 @@
 package com.hivehub.app.colmenas;
 
 import com.hivehub.app.apiarios.Apiario;
+import com.hivehub.app.inventario.Inventario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,5 +33,5 @@ public class Colmena {
     private Apiario apiario;
 
     @OneToMany(mappedBy = "colmena", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<com.hivehub.app.domain.Inventario> inventarios = new ArrayList<>();
+    private List<Inventario> inventarios = new ArrayList<>();
 }

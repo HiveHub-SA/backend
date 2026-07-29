@@ -1,12 +1,11 @@
-package com.hivehub.app.domain;
+package com.hivehub.app.inventario.tipoInventario;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "tipo_de_inventario")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -16,11 +15,10 @@ public class TipoDeInventario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String nombre; // Colmena, Alza, Núcleo
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nombre", nullable = false)
+    private TipoInventarioNombre name;
 
     @Column(name = "cantidad_marcos")
-    private Integer cantidadMarcos; // 8, 9 o 10 para Alza. Null para otros.
+    private Integer cantidadMarcos;
 }
-
-

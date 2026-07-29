@@ -1,25 +1,27 @@
 package com.hivehub.app.colmenas;
 
 import com.hivehub.app.apiarios.IApiarioRepository;
-import com.hivehub.app.domain.Inventario;
-import com.hivehub.app.repository.InventarioRepository;
+import com.hivehub.app.inventario.Inventario;
+import com.hivehub.app.inventario.InventarioRepository;
+import com.hivehub.app.inventario.tipoInventario.TipoInventarioNombre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import com.hivehub.app.domain.TipoDeInventario;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ColmenaImplementation implements IColmenaService{
+public class ColmenaImplementation implements IColmenaService {
+
+    private static final int MAX_CAMARAS = 2;
+    private static final int MAX_ALZAS = 5;
 
     private final IColmenaRepository repository;
     private final IApiarioRepository apiarioRepository;
     private final InventarioRepository inventarioRepository;
-    private final com.hivehub.app.repository.TipoDeInventarioRepository tipoInventarioRepository;
 
     @Override
     public List<Colmena> findAll() {
@@ -37,44 +39,31 @@ public class ColmenaImplementation implements IColmenaService{
         if (colmena.getName() == null) {
             throw new IllegalArgumentException("Name cannot be null.");
         }
-
         if (colmena.getApiario() == null) {
             throw new IllegalArgumentException("Apiario cannot be null.");
         }
-
         if (colmena.getCreatedAt() == null) {
             colmena.setCreatedAt(LocalDateTime.now());
         }
-
         return repository.save(colmena);
     }
 
     @Override
     public Colmena update(long id, Colmena updatedColmena) {
-
         Colmena existingColmena = this.findById(id);
-
-        if (updatedColmena == null) {
-            throw new IllegalArgumentException("Colmena with id " + id + " does not exist.");
-        }
 
         if (updatedColmena.getName() != null) {
             existingColmena.setName(updatedColmena.getName());
         }
-
         if (updatedColmena.getApiario() != null) {
             existingColmena.setApiario(updatedColmena.getApiario());
         }
-
         return save(existingColmena);
     }
 
     @Override
     public void delete(long id) {
-
-        if  (this.findById(id) == null) {
-            throw new IllegalArgumentException("Colmena with id " + id + " does not exist.");
-        }
+        findById(id);
         repository.deleteById(id);
     }
 
@@ -84,117 +73,99 @@ public class ColmenaImplementation implements IColmenaService{
         if (colmenaDTO.getName() == null) {
             throw new IllegalArgumentException("Name cannot be null.");
         }
-
         if (colmenaDTO.getApiarioId() == null) {
             throw new IllegalArgumentException("Apiario ID cannot be null.");
         }
 
         var apiario = apiarioRepository.findById(colmenaDTO.getApiarioId())
-                .orElseThrow(() -> new IllegalArgumentException("Apiario with id " + colmenaDTO.getApiarioId() + " does not exist."));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Apiario with id " + colmenaDTO.getApiarioId() + " does not exist."));
 
         Colmena colmena = Colmena.builder()
                 .name(colmenaDTO.getName())
                 .apiario(apiario)
                 .createdAt(colmenaDTO.getCreatedAt() != null ? colmenaDTO.getCreatedAt() : LocalDateTime.now())
+                .inventarios(new ArrayList<>())
                 .build();
         Colmena savedColmena = repository.save(colmena);
-        
-        actualizarInventarioColmena(savedColmena, "Colmena", colmenaDTO.getCamaras(), null);
-        actualizarInventarioColmena(savedColmena, "Alza", colmenaDTO.getAlzas(), colmenaDTO.getMarcosAlza());
-        actualizarInventarioColmena(savedColmena, "Núcleo", colmenaDTO.getNucleos(), null);
-        
-        return savedColmena;    
+
+        asociarInventarios(savedColmena, colmenaDTO.getInventarioIds());
+
+        return savedColmena;
     }
 
     @Transactional
-    @Override 
+    @Override
     public Colmena updateDTO(long id, ColmenaDTO colmenaDTO) {
         Colmena existingColmena = this.findById(id);
 
         if (colmenaDTO.getName() != null) {
             existingColmena.setName(colmenaDTO.getName());
         }
-
         if (colmenaDTO.getApiarioId() != null) {
             var apiario = apiarioRepository.findById(colmenaDTO.getApiarioId())
-                    .orElseThrow(() -> new IllegalArgumentException("Apiario with id " + id + " does not exist."));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Apiario with id " + colmenaDTO.getApiarioId() + " does not exist."));
             existingColmena.setApiario(apiario);
         }
 
         Colmena savedColmena = save(existingColmena);
-        
-        actualizarInventarioColmena(savedColmena, "Colmena", colmenaDTO.getCamaras(), null);
-        actualizarInventarioColmena(savedColmena, "Alza", colmenaDTO.getAlzas(), colmenaDTO.getMarcosAlza());
-        actualizarInventarioColmena(savedColmena, "Núcleo", colmenaDTO.getNucleos(), null);
-        
+
+        if (colmenaDTO.getInventarioIds() != null) {
+            asociarInventarios(savedColmena, colmenaDTO.getInventarioIds());
+        }
+
         return savedColmena;
     }
 
-    private void actualizarInventarioColmena(Colmena colmena, String tipoNombre, Integer cantidadDeseada, Integer marcos) {
-        if (cantidadDeseada == null || colmena.getId() == null) return;
+    private void asociarInventarios(Colmena colmena, List<Long> inventarioIds) {
+        List<Long> idsSolicitados = inventarioIds != null ? inventarioIds : List.of();
 
-        TipoDeInventario tipoObjetivo = null;
-        if (marcos != null) {
-            tipoObjetivo = tipoInventarioRepository.findByNombreIgnoreCaseAndCantidadMarcos(tipoNombre, marcos)
-                    .orElseGet(() -> {
-                        TipoDeInventario nuevoTipo = TipoDeInventario.builder()
-                                .nombre(tipoNombre)
-                                .cantidadMarcos(marcos)
-                                .build();
-                        return tipoInventarioRepository.save(nuevoTipo);
-                    });
-        } else {
-            tipoObjetivo = tipoInventarioRepository.findByNombreIgnoreCase(tipoNombre)
-                    .orElseGet(() -> {
-                        TipoDeInventario nuevoTipo = TipoDeInventario.builder()
-                                .nombre(tipoNombre)
-                                .cantidadMarcos(null)
-                                .build();
-                        return tipoInventarioRepository.save(nuevoTipo);
-                    });
+        List<Inventario> seleccion = inventarioRepository.findAllById(idsSolicitados);
+        if (seleccion.size() != idsSolicitados.size()) {
+            throw new IllegalArgumentException("Uno o más ids de inventario no existen.");
         }
-        
-        List<Inventario> asignados = inventarioRepository.findByColmenaIdAndTipoInventarioNombreIgnoreCase(colmena.getId(), tipoNombre);
-        int currentCount = asignados.size();
-        
-        if (cantidadDeseada > currentCount) {
-            int toAdd = cantidadDeseada - currentCount;
-            List<Inventario> disponibles = inventarioRepository.findByColmenaIsNullAndTipoInventarioNombreIgnoreCase(tipoNombre);
-            if (disponibles.size() < toAdd) {
-                throw new IllegalArgumentException("No hay suficiente material suelto disponible para: " + tipoNombre);
+
+        for (Inventario inv : seleccion) {
+            Colmena colmenaActual = inv.getColmena();
+            if (colmenaActual != null && !colmenaActual.getId().equals(colmena.getId())) {
+                throw new IllegalArgumentException(
+                        "El inventario con id " + inv.getId() + " ya está asignado a otra colmena.");
             }
-            for (int i = 0; i < toAdd; i++) {
-                Inventario inv = disponibles.get(i);
-                inv.setColmena(colmena);
-                if (tipoObjetivo != null) {
-                    inv.setTipoInventario(tipoObjetivo);
-                }
-                inventarioRepository.save(inv);
-                if (colmena.getInventarios() == null) {
-                    colmena.setInventarios(new ArrayList<>());
-                }
-                colmena.getInventarios().add(inv);
-            }
-        } else if (cantidadDeseada < currentCount) {
-            int toRemove = currentCount - cantidadDeseada;
-            for (int i = 0; i < toRemove; i++) {
-                Inventario inv = asignados.get(i);
+        }
+
+        long camaras = seleccion.stream()
+                .filter(i -> i.getTipoInventario() != null && i.getTipoInventario().getName() == TipoInventarioNombre.CAMARA)
+                .count();
+
+        long alzas = seleccion.stream()
+                .filter(i -> i.getTipoInventario() != null && i.getTipoInventario().getName() == TipoInventarioNombre.ALZA)
+                .count();
+                
+        if (camaras > MAX_CAMARAS) {
+            throw new IllegalArgumentException("Una colmena no puede tener más de " + MAX_CAMARAS + " cámaras.");
+        }
+        if (alzas > MAX_ALZAS) {
+            throw new IllegalArgumentException("Una colmena no puede tener más de " + MAX_ALZAS + " alzas.");
+        }
+
+        Set<Long> nuevosIds = seleccion.stream().map(Inventario::getId).collect(Collectors.toSet());
+        List<Inventario> actuales = colmena.getInventarios() != null
+                ? new ArrayList<>(colmena.getInventarios())
+                : new ArrayList<>();
+
+        for (Inventario inv : actuales) {
+            if (!nuevosIds.contains(inv.getId())) {
                 inv.setColmena(null);
                 inventarioRepository.save(inv);
-                if (colmena.getInventarios() != null) {
-                    colmena.getInventarios().remove(inv);
-                }
             }
         }
 
-        if (tipoObjetivo != null && cantidadDeseada > 0) {
-            List<Inventario> restantes = inventarioRepository.findByColmenaIdAndTipoInventarioNombreIgnoreCase(colmena.getId(), tipoNombre);
-            for (Inventario inv : restantes) {
-                if (!inv.getTipoInventario().getId().equals(tipoObjetivo.getId())) {
-                    inv.setTipoInventario(tipoObjetivo);
-                    inventarioRepository.save(inv);
-                }
-            }
+        for (Inventario inv : seleccion) {
+            inv.setColmena(colmena);
+            inventarioRepository.save(inv);
         }
+
+        colmena.setInventarios(seleccion);
     }
 }

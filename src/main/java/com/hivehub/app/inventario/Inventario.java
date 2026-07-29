@@ -1,12 +1,13 @@
-package com.hivehub.app.domain;
+package com.hivehub.app.inventario;
 
+import com.hivehub.app.colmenas.Colmena;
+import com.hivehub.app.inventario.tipoInventario.TipoDeInventario;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "inventario")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -25,7 +26,5 @@ public class Inventario {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "colmena_id")
-    private com.hivehub.app.colmenas.Colmena colmena;
+    private Colmena colmena;
 }
-
-
