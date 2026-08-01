@@ -63,4 +63,36 @@ public class InspeccionController {
     public ResponseEntity<InspeccionDTO> finalizarInspeccion(@PathVariable Long id) {
         return ResponseEntity.ok(inspeccionService.finalizarInspeccion(id));
     }
+
+    /**
+     * GET /hivehub/inspecciones/{inspeccionId}/colmenas/{colmenaId}
+     * Retorna el detalle de inspección para una colmena determinada (US 32).
+     */
+    @GetMapping("/inspecciones/{inspeccionId}/colmenas/{colmenaId}")
+    public ResponseEntity<InspeccionColmenaDTO> getInspeccionColmena(
+            @PathVariable Long inspeccionId,
+            @PathVariable Long colmenaId) {
+        return ResponseEntity.ok(inspeccionService.getInspeccionColmena(inspeccionId, colmenaId));
+    }
+
+    /**
+     * POST /hivehub/inspecciones/{inspeccionId}/colmenas/{colmenaId}
+     * Guarda o actualiza el detalle de inspección para una colmena (US 32).
+     */
+    @PostMapping("/inspecciones/{inspeccionId}/colmenas/{colmenaId}")
+    public ResponseEntity<InspeccionColmenaDTO> saveInspeccionColmena(
+            @PathVariable Long inspeccionId,
+            @PathVariable Long colmenaId,
+            @RequestBody InspeccionColmenaDTO dto) {
+        return ResponseEntity.ok(inspeccionService.saveInspeccionColmena(inspeccionId, colmenaId, dto));
+    }
+
+    /**
+     * GET /hivehub/inspecciones/{inspeccionId}/colmenas
+     * Retorna todas las inspecciones de colmenas para una inspección general.
+     */
+    @GetMapping("/inspecciones/{inspeccionId}/colmenas")
+    public ResponseEntity<List<InspeccionColmenaDTO>> getInspeccionesColmenas(@PathVariable Long inspeccionId) {
+        return ResponseEntity.ok(inspeccionService.findColmenasByInspeccionId(inspeccionId));
+    }
 }

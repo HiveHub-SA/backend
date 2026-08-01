@@ -6,6 +6,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.hivehub.app.colmenas.Colmena;
+import com.hivehub.app.colmenas.IColmenaRepository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,46 +27,17 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     /** Repositorio JPA para consultar apiarios vinculados */
     private final IApiarioRepository apiarioRepository;
 
+    private final IInspeccionColmenaRepository inspeccionColmenaRepository;
+
+    private final IColmenaRepository colmenaRepository;
+
     /**
      * Inicialización posterior a la construcción del bean.
      * Carga registros iniciales de demostración en la base de datos si esta no posee registros previos.
      */
     @PostConstruct
     public void init() {
-        // Verificar si la tabla de inspecciones está vacía
-        if (inspeccionRepository.count() == 0) {
-            List<Apiario> apiarios = apiarioRepository.findAll();
-            if (!apiarios.isEmpty()) {
-                Apiario apiario = apiarios.get(0);
-
-                // Registro 1: Inspección más reciente en borrador
-                Inspeccion insp1 = Inspeccion.builder()
-                        .apiario(apiario)
-                        .fecha(LocalDateTime.of(2026, 7, 30, 10, 0))
-                        .floracion("Trébol")
-                        .estado("EN_BORRADOR")
-                        .build();
-
-                // Registro 2: Inspección previa sincronizada
-                Inspeccion insp2 = Inspeccion.builder()
-                        .apiario(apiario)
-                        .fecha(LocalDateTime.of(2026, 7, 22, 14, 30))
-                        .floracion("Eucalipto")
-                        .estado("SINCRONIZADA")
-                        .build();
-
-                // Registro 3: Inspección anterior sincronizada
-                Inspeccion insp3 = Inspeccion.builder()
-                        .apiario(apiario)
-                        .fecha(LocalDateTime.of(2026, 7, 10, 9, 15))
-                        .floracion("Trébol")
-                        .estado("SINCRONIZADA")
-                        .build();
-
-                // Guardar los 3 registros iniciales
-                inspeccionRepository.saveAll(List.of(insp1, insp2, insp3));
-            }
-        }
+        // Método de inicialización sin datos mock. La base de datos inicia vacía.
     }
 
     /**
@@ -170,6 +144,94 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .floracion(inspeccion.getFloracion())
                 .estado(inspeccion.getEstado())
                 .apiarioId(inspeccion.getApiario() != null ? inspeccion.getApiario().getId() : null)
+                .build();
+    }
+
+    /**
+     * Obtiene el detalle de inspección registrado para una colmena determinada (US 32).
+     * Si aún no se registró detalle para dicha colmena, retorna un DTO con valores por defecto.
+     *
+     * @param inspeccionId Identificador de la inspección general
+     * @param colmenaId Identificador de la colmena
+     * @return InspeccionColmenaDTO con los datos sanitarios y operativos
+     */
+    @Override
+    public InspeccionColmenaDTO getInspeccionColmena(Long inspeccionId, Long colmenaId) {
+        return inspeccionColmenaRepository.findByInspeccionIdAndColmenaId(inspeccionId, colmenaId)
+                .map(this::toColmenaDTO)
+                .orElse(InspeccionColmenaDTO.builder()
+                        .inspeccionId(inspeccionId)
+                        .colmenaId(colmenaId)
+                        .varroa("NO_DETECTADA")
+                        .estadoReina("VISTA_Y_SANA")
+                        .nivelAlimento("MEDIO")
+                        .produjoMiel(false)
+                        .observaciones("")
+                        .build());
+    }
+
+    /**
+     * Guarda o actualiza el registro de inspección individual de una colmena (US 32).
+     *
+     * @param inspeccionId ID de la inspección general de apiario
+     * @param colmenaId ID de la colmena inspeccionada
+     * @param dto DTO con los campos completados (Varroa, Reina, Alimento, Miel, Observaciones)
+     * @return DTO actualizado almacenado en la base de datos
+     */
+    @Override
+    public InspeccionColmenaDTO saveInspeccionColmena(Long inspeccionId, Long colmenaId, InspeccionColmenaDTO dto) {
+        Inspeccion inspeccion = inspeccionRepository.findById(inspeccionId)
+                .orElseThrow(() -> new IllegalArgumentException("Inspección no encontrada con id: " + inspeccionId));
+
+        Colmena colmena = colmenaRepository.findById(colmenaId)
+                .orElseThrow(() -> new IllegalArgumentException("Colmena no encontrada con id: " + colmenaId));
+
+        InspeccionColmena entity = inspeccionColmenaRepository.findByInspeccionIdAndColmenaId(inspeccionId, colmenaId)
+                .orElse(InspeccionColmena.builder()
+                        .inspeccion(inspeccion)
+                        .colmena(colmena)
+                        .build());
+
+        entity.setVarroa(dto.getVarroa());
+        entity.setEstadoReina(dto.getEstadoReina());
+        entity.setNivelAlimento(dto.getNivelAlimento());
+        entity.setProdujoMiel(dto.getProdujoMiel());
+        entity.setObservaciones(dto.getObservaciones());
+
+        return toColmenaDTO(inspeccionColmenaRepository.save(entity));
+    }
+
+    /**
+     * Obtiene la lista de inspecciones individuales de colmenas asociadas a una inspección general.
+     *
+     * @param inspeccionId Identificador de la inspección general
+     * @return Lista de InspeccionColmenaDTO asociadas
+     */
+    @Override
+    public List<InspeccionColmenaDTO> findColmenasByInspeccionId(Long inspeccionId) {
+        return inspeccionColmenaRepository.findByInspeccionId(inspeccionId)
+                .stream()
+                .map(this::toColmenaDTO)
+                .toList();
+    }
+
+    /**
+     * Mapea un objeto entidad {@link InspeccionColmena} hacia su DTO representativo {@link InspeccionColmenaDTO}.
+     *
+     * @param entity Objeto entidad
+     * @return Objeto DTO mapeado
+     */
+    private InspeccionColmenaDTO toColmenaDTO(InspeccionColmena entity) {
+        return InspeccionColmenaDTO.builder()
+                .id(entity.getId())
+                .inspeccionId(entity.getInspeccion() != null ? entity.getInspeccion().getId() : null)
+                .colmenaId(entity.getColmena() != null ? entity.getColmena().getId() : null)
+                .colmenaName(entity.getColmena() != null ? entity.getColmena().getName() : null)
+                .varroa(entity.getVarroa())
+                .estadoReina(entity.getEstadoReina())
+                .nivelAlimento(entity.getNivelAlimento())
+                .produjoMiel(entity.getProdujoMiel())
+                .observaciones(entity.getObservaciones())
                 .build();
     }
 }

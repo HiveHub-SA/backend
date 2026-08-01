@@ -36,4 +36,19 @@ public interface IApiarioInspeccionService {
      * @param id ID de la inspección a finalizar
      */
     InspeccionDTO finalizarInspeccion(Long id);
+
+    /**
+     * Obtiene el detalle de inspección de una colmena específica.
+     */
+    InspeccionColmenaDTO getInspeccionColmena(Long inspeccionId, Long colmenaId);
+
+    /**
+     * Guarda o actualiza el detalle de inspección de una colmena (US 32).
+     */
+    InspeccionColmenaDTO saveInspeccionColmena(Long inspeccionId, Long colmenaId, InspeccionColmenaDTO dto);
+
+    /**
+     * Obtiene todas las inspecciones de colmenas de una inspección de apiario.
+     */
+    List<InspeccionColmenaDTO> findColmenasByInspeccionId(Long inspeccionId);
 }
