@@ -47,16 +47,34 @@ public class OperacionSalaService {
     public OperacionSalaResponseDTO registrarOperacion(OperacionSalaRequestDTO request) {
         String temporadaCalculada = calcularTemporada(request.fecha());
 
+        List<Apiario> apiarios = List.of();
+        if (request.apiariosIds() != null && !request.apiariosIds().isEmpty()) {
+            apiarios = apiarioRepository.findAllById(request.apiariosIds());
+        }
+
         if ("EXTRACCION".equals(request.tipoOperacion())) {
             ResumenSalaResponseDTO resumen = obtenerResumen(temporadaCalculada);
             if (request.cantidadAlzas() > resumen.alzasEnEspera()) {
                 throw new IllegalArgumentException("No se pueden procesar más alzas de las que están en espera en la sala. Alzas en espera disponibles: " + resumen.alzasEnEspera());
             }
-        }
 
-        List<Apiario> apiarios = List.of();
-        if (request.apiariosIds() != null && !request.apiariosIds().isEmpty()) {
-            apiarios = apiarioRepository.findAllById(request.apiariosIds());
+            if (request.apiariosIds() == null || request.apiariosIds().isEmpty()) {
+                throw new IllegalArgumentException("Debe seleccionar al menos un apiario para registrar una extracción.");
+            }
+
+            List<OperacionSala> operacionesTemporada = repository.findByTemporadaOrderByFechaDesc(temporadaCalculada);
+            java.util.Set<Long> apiariosConIngresoIds = operacionesTemporada.stream()
+                    .filter(op -> "INGRESO".equals(op.getTipoOperacion()))
+                    .filter(op -> op.getApiarios() != null)
+                    .flatMap(op -> op.getApiarios().stream())
+                    .map(Apiario::getId)
+                    .collect(Collectors.toSet());
+
+            for (Apiario ap : apiarios) {
+                if (!apiariosConIngresoIds.contains(ap.getId())) {
+                    throw new IllegalArgumentException("No se pueden extraer alzas del apiario '" + ap.getName() + "' porque no registra un ingreso de alzas a la sala en la temporada actual.");
+                }
+            }
         }
 
         // Convertir RequestDTO a Entidad

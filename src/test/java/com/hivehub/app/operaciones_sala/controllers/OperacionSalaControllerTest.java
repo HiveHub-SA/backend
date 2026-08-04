@@ -24,14 +24,23 @@ public class OperacionSalaControllerTest {
     @Autowired
     private OperacionSalaRepository repository;
 
+    @Autowired
+    private com.hivehub.app.apiarios.IApiarioRepository apiarioRepository;
+
     @BeforeEach
     void setUp() {
         repository.deleteAll();
+        apiarioRepository.deleteAll();
     }
 
     @Test
     void testFlujoOperacionesSala() throws Exception {
         String temporada = "2026/2027";
+
+        com.hivehub.app.apiarios.Apiario apiario = new com.hivehub.app.apiarios.Apiario();
+        apiario.setName("Apiario Central");
+        apiario = apiarioRepository.save(apiario);
+        Long apiarioId = apiario.getId();
 
         // 1. Obtener el resumen inicial
         mockMvc.perform(get("/api/hivehub/sala-extraccion/resumen")
@@ -46,9 +55,10 @@ public class OperacionSalaControllerTest {
                 {
                     "fecha": "2026-11-10",
                     "tipoOperacion": "INGRESO",
-                    "cantidadAlzas": 10
+                    "cantidadAlzas": 10,
+                    "apiariosIds": [%d]
                 }
-                """;
+                """.formatted(apiarioId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadIngreso))
@@ -77,9 +87,10 @@ public class OperacionSalaControllerTest {
                     "fecha": "2026-11-10",
                     "tipoOperacion": "EXTRACCION",
                     "cantidadAlzas": 4,
-                    "kilosMiel": 120.5
+                    "kilosMiel": 120.5,
+                    "apiariosIds": [%d]
                 }
-                """;
+                """.formatted(apiarioId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadExtraccion))
@@ -102,13 +113,19 @@ public class OperacionSalaControllerTest {
 
     @Test
     void testRegistrarExtraccionExcedeStockFails() throws Exception {
+        com.hivehub.app.apiarios.Apiario apiario = new com.hivehub.app.apiarios.Apiario();
+        apiario.setName("Apiario Central");
+        apiario = apiarioRepository.save(apiario);
+        Long apiarioId = apiario.getId();
+
         String payloadIngreso = """
                 {
                     "fecha": "2026-11-10",
                     "tipoOperacion": "INGRESO",
-                    "cantidadAlzas": 10
+                    "cantidadAlzas": 10,
+                    "apiariosIds": [%d]
                 }
-                """;
+                """.formatted(apiarioId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadIngreso))
@@ -119,9 +136,10 @@ public class OperacionSalaControllerTest {
                     "fecha": "2026-11-10",
                     "tipoOperacion": "EXTRACCION",
                     "cantidadAlzas": 15,
-                    "kilosMiel": 100.0
+                    "kilosMiel": 100.0,
+                    "apiariosIds": [%d]
                 }
-                """;
+                """.formatted(apiarioId);
         mockMvc.perform(post("/api/hivehub/sala-extraccion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payloadExtraccionExcede))
