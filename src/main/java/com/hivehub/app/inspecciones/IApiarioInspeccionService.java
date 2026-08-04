@@ -51,4 +51,10 @@ public interface IApiarioInspeccionService {
      * Obtiene todas las inspecciones de colmenas de una inspección de apiario.
      */
     List<InspeccionColmenaDTO> findColmenasByInspeccionId(Long inspeccionId);
+
+    /**
+     * Elimina una inspección por ID y todos sus registros por colmena asociados.
+     * @param id ID de la inspección a eliminar
+     */
+    void deleteInspeccion(Long id);
 }

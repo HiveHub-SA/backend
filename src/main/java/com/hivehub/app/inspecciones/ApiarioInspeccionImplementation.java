@@ -5,6 +5,7 @@ import com.hivehub.app.apiarios.IApiarioRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hivehub.app.colmenas.Colmena;
 import com.hivehub.app.colmenas.IColmenaRepository;
@@ -213,6 +214,18 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .stream()
                 .map(this::toColmenaDTO)
                 .toList();
+    }
+
+    /**
+     * Elimina una inspección por ID y todas las inspecciones de colmenas asociadas.
+     *
+     * @param id ID de la inspección
+     */
+    @Override
+    @Transactional
+    public void deleteInspeccion(Long id) {
+        inspeccionColmenaRepository.deleteByInspeccionId(id);
+        inspeccionRepository.deleteById(id);
     }
 
     /**

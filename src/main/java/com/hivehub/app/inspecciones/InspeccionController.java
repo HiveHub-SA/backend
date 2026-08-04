@@ -95,4 +95,14 @@ public class InspeccionController {
     public ResponseEntity<List<InspeccionColmenaDTO>> getInspeccionesColmenas(@PathVariable Long inspeccionId) {
         return ResponseEntity.ok(inspeccionService.findColmenasByInspeccionId(inspeccionId));
     }
+
+    /**
+     * DELETE /hivehub/inspecciones/{id}
+     * Elimina un registro de inspección por su ID.
+     */
+    @DeleteMapping("/inspecciones/{id}")
+    public ResponseEntity<Void> deleteInspeccion(@PathVariable Long id) {
+        inspeccionService.deleteInspeccion(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -13,4 +13,5 @@ import java.util.Optional;
 public interface IInspeccionColmenaRepository extends JpaRepository<InspeccionColmena, Long> {
     List<InspeccionColmena> findByInspeccionId(Long inspeccionId);
     Optional<InspeccionColmena> findByInspeccionIdAndColmenaId(Long inspeccionId, Long colmenaId);
+    void deleteByInspeccionId(Long inspeccionId);
 }
