@@ -184,8 +184,10 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
         Inspeccion inspeccion = inspeccionRepository.findById(inspeccionId)
                 .orElseThrow(() -> new IllegalArgumentException("Inspección no encontrada con id: " + inspeccionId));
 
-        Colmena colmena = colmenaRepository.findById(colmenaId)
-                .orElseThrow(() -> new IllegalArgumentException("Colmena no encontrada con id: " + colmenaId));
+        Colmena colmena = colmenaRepository.findById(colmenaId.longValue());
+        if (colmena == null) {
+            throw new IllegalArgumentException("Colmena no encontrada con id: " + colmenaId);
+        }
 
         InspeccionColmena entity = inspeccionColmenaRepository.findByInspeccionIdAndColmenaId(inspeccionId, colmenaId)
                 .orElse(InspeccionColmena.builder()
