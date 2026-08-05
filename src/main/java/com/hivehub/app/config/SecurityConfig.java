@@ -27,6 +27,7 @@ public class SecurityConfig {
                         // Handshake mapping as public
                         .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/hivehub/**").permitAll()
+                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/error").permitAll()
 
                         // Any other request will require authentication
