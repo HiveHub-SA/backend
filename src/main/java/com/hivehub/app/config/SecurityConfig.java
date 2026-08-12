@@ -24,12 +24,10 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Handshake mapping as public
                         .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/hivehub/**").permitAll()
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/error").permitAll()
-
                         // Any other request will require authentication
                         .anyRequest().authenticated())
                 .httpBasic(basic -> {
