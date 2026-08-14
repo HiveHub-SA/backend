@@ -67,12 +67,16 @@ public class OperacionSalaServiceTest {
 
     @Test
     void testRegistrarOperacionExtraccion() {
+        com.hivehub.app.apiarios.Apiario apiario = new com.hivehub.app.apiarios.Apiario();
+        apiario.setId(1L);
+        apiario.setName("Apiario Principal");
+
         OperacionSalaRequestDTO request = new OperacionSalaRequestDTO(
             LocalDate.of(2026, 11, 10), // Mes 11 >= 11 -> Temporada 2026/2027
             "EXTRACCION",
             4,
             120.5,
-            Collections.emptyList()
+            List.of(1L)
         );
 
         OperacionSala saved = new OperacionSala();
@@ -82,11 +86,14 @@ public class OperacionSalaServiceTest {
         saved.setCantidadAlzas(request.cantidadAlzas());
         saved.setKilosMiel(request.kilosMiel());
         saved.setTemporada("2026/2027");
+        saved.setApiarios(List.of(apiario));
 
         OperacionSala op1 = new OperacionSala();
         op1.setTipoOperacion("INGRESO");
         op1.setCantidadAlzas(10);
+        op1.setApiarios(List.of(apiario));
 
+        when(apiarioRepository.findAllById(List.of(1L))).thenReturn(List.of(apiario));
         when(repository.findByTemporadaOrderByFechaDesc("2026/2027"))
                 .thenReturn(Collections.singletonList(op1));
 
@@ -106,10 +113,39 @@ public class OperacionSalaServiceTest {
 
     @Test
     void testRegistrarOperacionExtraccionExcedeStock() {
+        com.hivehub.app.apiarios.Apiario apiario = new com.hivehub.app.apiarios.Apiario();
+        apiario.setId(1L);
+
         OperacionSalaRequestDTO request = new OperacionSalaRequestDTO(
             LocalDate.of(2026, 11, 10),
             "EXTRACCION",
             15,
+            120.5,
+            List.of(1L)
+        );
+
+        OperacionSala op1 = new OperacionSala();
+        op1.setTipoOperacion("INGRESO");
+        op1.setCantidadAlzas(10);
+        op1.setApiarios(List.of(apiario));
+
+        when(apiarioRepository.findAllById(List.of(1L))).thenReturn(List.of(apiario));
+        when(repository.findByTemporadaOrderByFechaDesc("2026/2027"))
+                .thenReturn(Collections.singletonList(op1));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.registrarOperacion(request);
+        });
+
+        verify(repository, never()).save(any(OperacionSala.class));
+    }
+
+    @Test
+    void testRegistrarOperacionExtraccionSinApiariosLanzaExcepcion() {
+        OperacionSalaRequestDTO request = new OperacionSalaRequestDTO(
+            LocalDate.of(2026, 11, 10),
+            "EXTRACCION",
+            4,
             120.5,
             Collections.emptyList()
         );
@@ -124,6 +160,41 @@ public class OperacionSalaServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             service.registrarOperacion(request);
         });
+
+        verify(repository, never()).save(any(OperacionSala.class));
+    }
+
+    @Test
+    void testRegistrarOperacionExtraccionApiarioSinIngresoLanzaExcepcion() {
+        com.hivehub.app.apiarios.Apiario apiario1 = new com.hivehub.app.apiarios.Apiario();
+        apiario1.setId(1L);
+        apiario1.setName("Apiario Con Ingreso");
+
+        com.hivehub.app.apiarios.Apiario apiario2 = new com.hivehub.app.apiarios.Apiario();
+        apiario2.setId(2L);
+        apiario2.setName("Apiario Sin Ingreso");
+
+        OperacionSalaRequestDTO request = new OperacionSalaRequestDTO(
+            LocalDate.of(2026, 11, 10),
+            "EXTRACCION",
+            4,
+            120.5,
+            List.of(2L)
+        );
+
+        OperacionSala op1 = new OperacionSala();
+        op1.setTipoOperacion("INGRESO");
+        op1.setCantidadAlzas(10);
+        op1.setApiarios(List.of(apiario1));
+
+        when(apiarioRepository.findAllById(List.of(2L))).thenReturn(List.of(apiario2));
+        when(repository.findByTemporadaOrderByFechaDesc("2026/2027"))
+                .thenReturn(Collections.singletonList(op1));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            service.registrarOperacion(request);
+        });
+        assertTrue(ex.getMessage().contains("no registra un ingreso de alzas"));
 
         verify(repository, never()).save(any(OperacionSala.class));
     }

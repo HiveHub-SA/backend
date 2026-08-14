@@ -1,6 +1,7 @@
 package com.hivehub.app.colmenas;
 
 import com.hivehub.app.apiarios.Apiario;
+import com.hivehub.app.inventario.Inventario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -29,6 +32,6 @@ public class Colmena {
     @JoinColumn(name = "apiario", referencedColumnName = "id", nullable = true)
     private Apiario apiario;
 
-    //@OneToMany (mappedBy = "id", cascade = CascadeType.ALL)
-    //private List<Inventario> inventario = new ArrayList<>();
+    @OneToMany(mappedBy = "colmena", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Inventario> inventarios = new ArrayList<>();
 }

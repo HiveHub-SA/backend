@@ -4,7 +4,7 @@
 .env.local
 .env.*.local
 *.env
-application-local.properties
+
 
 # 2. Compilación y Artefactos (Maven)
 # ==========================================
@@ -68,6 +68,7 @@ crash.log
 .settings
 .springBeans
 .sts4-cache
+/src/main/resources/vosk-model-es-0.42/
 
 # IA / IDE configs
 .claude/

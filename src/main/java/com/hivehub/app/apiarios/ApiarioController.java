@@ -1,5 +1,7 @@
 package com.hivehub.app.apiarios;
-
+import com.hivehub.app.apiarios.ruta.IRutaService;
+import com.hivehub.app.apiarios.ruta.RutaDTO;
+import com.hivehub.app.apiarios.ruta.RutaRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +19,9 @@ public class ApiarioController {
 
     @Autowired
     private ApiarioMapper mapper;
+
+    @Autowired
+    private IRutaService rutaService;
 
     @PostMapping("/apiarios")
     public ResponseEntity<?> create(@RequestBody Apiario apiario) {
@@ -49,4 +54,13 @@ public class ApiarioController {
         apiarioService.delete(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/apiarios/ruta")
+    public ResponseEntity<RutaDTO> calcularRuta(
+            @RequestBody RutaRequestDTO request) {
+
+        return ResponseEntity.ok(
+                rutaService.calcularRuta(request)
+        );
+}
 }

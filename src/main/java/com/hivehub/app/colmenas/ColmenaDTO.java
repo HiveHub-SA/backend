@@ -1,11 +1,10 @@
 package com.hivehub.app.colmenas;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.hivehub.app.inventario.InventarioResponseDTO;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -16,4 +15,10 @@ public class ColmenaDTO {
     private String name;
     private Long apiarioId;
     private LocalDateTime createdAt;
+
+    // Seleccion inv
+    private List<Long> inventarioIds;
+
+    // Composicion ya calculada
+    private List<InventarioResponseDTO> inventarios;
 }

@@ -8,4 +8,5 @@ public interface IApiarioRepository extends JpaRepository<Apiario, Long> {
 
     List<Apiario> findAll();
     Apiario findById(long id);
+    List<Apiario> findByIdIn(List<Long> ids);
 }
