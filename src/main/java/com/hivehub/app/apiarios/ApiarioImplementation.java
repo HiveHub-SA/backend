@@ -64,7 +64,6 @@ public class ApiarioImplementation implements IApiarioService{
             existingApiario.setLongitude(updatedApiario.getLongitude());
         }
 
-
         return save(existingApiario);
     }
 
