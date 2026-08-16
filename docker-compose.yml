@@ -6,9 +6,9 @@ services:
     restart: always
     container_name: hivehub-database
     environment:
-      POSTGRES_USER: ${DB_USER:-hivehub}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-docenademiga}
-      POSTGRES_DB: ${DB_NAME:-hivehub_db}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
@@ -31,9 +31,10 @@ services:
     environment:
       DB_HOST: postgres-db
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-hivehub_db}
-      DB_USER: ${DB_USER:-hivehub}
-      DB_PASSWORD: ${DB_PASSWORD:-docenademiga}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
 
 volumes:
   postgres_data:

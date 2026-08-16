@@ -20,8 +20,8 @@ public class JwtService {
     private final long expirationMs;
 
     public JwtService(
-            @Value("${app.security.jwt.secret:hivehub-super-secret-key-for-jwt-authentication-2026-2026}") String secret,
-            @Value("${app.security.jwt.expiration-ms:57600000}") long expirationMs) {
+            @Value("${app.security.jwt.secret}") String secret,
+            @Value("${app.security.jwt.expiration-ms:86400000}") long expirationMs) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }

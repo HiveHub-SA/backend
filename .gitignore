@@ -68,3 +68,9 @@ crash.log
 .settings
 .springBeans
 .sts4-cache
+/src/main/resources/vosk-model-es-0.42/
+
+# IA / IDE configs
+.claude/
+.antigravity/
+.testsprite/
