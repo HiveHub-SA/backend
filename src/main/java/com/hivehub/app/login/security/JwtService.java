@@ -59,6 +59,10 @@ public class JwtService {
         }
     }
 
+    public Date extractExpiration(String token) {
+    return extractAllClaims(token).getExpiration();
+}
+
     private boolean isTokenExpired(Claims claims) {
         return claims.getExpiration() != null && claims.getExpiration().before(new Date());
     }

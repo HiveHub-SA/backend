@@ -50,9 +50,14 @@ public class AuthService {
 
     @Transactional
     public void logout(String token) {
+        Instant expiracion = jwtService.extractExpiration(token).toInstant();
+        if (expiracion.isBefore(Instant.now())) {
+            return;
+        }
         TokenRevocado revocado = new TokenRevocado();
         revocado.setToken(token);
         revocado.setRevokedAt(Instant.now());
+        revocado.setExpiracion(expiracion);
         tokenRevocadoRepository.save(revocado);
     }
 }

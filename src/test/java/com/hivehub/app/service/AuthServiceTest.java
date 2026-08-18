@@ -1,8 +1,9 @@
 package com.hivehub.app.service;
 
-import com.hivehub.app.login.domain.User;
-import com.hivehub.app.login.service.AuthService;
+import com.hivehub.app.login.domain.TokenRevocado;
+import com.hivehub.app.login.domain.TokenRevocadoRepository;
 import com.hivehub.app.login.domain.UserRepository;
+import com.hivehub.app.login.service.AuthService;
 import com.hivehub.app.login.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,12 +12,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
+import java.time.Instant;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -36,7 +39,7 @@ class AuthServiceTest {
     private JwtService jwtService;
 
     @Mock
-    private SesionRepository sesionRepository;
+    private TokenRevocadoRepository tokenRevocadoRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -45,61 +48,53 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Inicializamos con 24h (86400000ms) manual para el test
-        authService = new AuthService(authenticationManager, jwtService, sesionRepository, userRepository, 86400000L);
+        authService = new AuthService(authenticationManager, jwtService, tokenRevocadoRepository, userRepository, 86400000L);
     }
 
     @Test
-    void login_Success_ReturnsTokenAndSavesSession() {
+    void login_Success_ReturnsToken() {
         String username = "admin";
         String password = "password";
         String expectedToken = "jwt.token.here";
 
         Authentication authMock = mock(Authentication.class);
         UserDetails userDetailsMock = mock(UserDetails.class);
-        User userMock = new User();
-        userMock.setUsername(username);
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authMock);
         when(authMock.getPrincipal()).thenReturn(userDetailsMock);
         when(jwtService.generateToken(userDetailsMock)).thenReturn(expectedToken);
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(userMock));
 
         String resultToken = authService.login(username, password);
 
         assertEquals(expectedToken, resultToken);
-
-        ArgumentCaptor<Sesion> sesionCaptor = ArgumentCaptor.forClass(Sesion.class);
-        verify(sesionRepository).save(sesionCaptor.capture());
-
-        Sesion savedSesion = sesionCaptor.getValue();
-        assertEquals(expectedToken, savedSesion.getTokenJWT());
-        assertEquals(userMock, savedSesion.getUser());
-        assertNotNull(savedSesion.getTiempoExpiracion());
+        verify(tokenRevocadoRepository, never()).save(any());
     }
 
     @Test
-    void login_UserNotFound_ThrowsException() {
+    void login_BadCredentials_ThrowsException() {
         String username = "admin";
-        String password = "password";
+        String password = "passwordincorrecta";
 
-        Authentication authMock = mock(Authentication.class);
-        UserDetails userDetailsMock = mock(UserDetails.class);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authMock);
-        when(authMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(jwtService.generateToken(userDetailsMock)).thenReturn("token");
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
-
-        assertThrows(ResponseStatusException.class, () -> authService.login(username, password));
+        assertThrows(BadCredentialsException.class, () -> authService.login(username, password));
     }
 
     @Test
-    void logout_Success_DeletesSession() {
+    void logout_Success_SavesRevokedToken() {
         String token = "jwt.token.here";
+
+        Date futureDate = Date.from(Instant.now().plusSeconds(3600));
+        when(jwtService.extractExpiration(token)).thenReturn(futureDate);
 
         authService.logout(token);
 
-        verify(sesionRepository).deleteByTokenJWT(token);
+        ArgumentCaptor<TokenRevocado> captor = ArgumentCaptor.forClass(TokenRevocado.class);
+        verify(tokenRevocadoRepository).save(captor.capture());
+
+        assertEquals(token, captor.getValue().getToken());
+        assertNotNull(captor.getValue().getRevokedAt());
+        assertEquals(futureDate.toInstant(), captor.getValue().getExpiracion());
     }
 }
