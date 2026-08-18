@@ -1,8 +1,9 @@
-package com.hivehub.app.security;
+package com.hivehub.app.login.security;
 
-import com.hivehub.app.repository.SesionRepository;
+import com.hivehub.app.login.domain.TokenRevocadoRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,46 +16,43 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Filtro JWT que intercepta cada request, valida el token y verifica
- * que exista una sesión activa en la tabla 'sesion'.
- * Si el token no tiene sesión activa (fue cerrada por logout), se rechaza.
- */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final SesionRepository sesionRepository;
+    private final TokenRevocadoRepository tokenRevocadoRepository; // ← agregado
 
     public JwtAuthenticationFilter(JwtService jwtService,
                                    UserDetailsService userDetailsService,
-                                   SesionRepository sesionRepository) {
+                                   TokenRevocadoRepository tokenRevocadoRepository) { // ← agregado
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.sesionRepository = sesionRepository;
+        this.tokenRevocadoRepository = tokenRevocadoRepository; // ← agregado
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/health")
+                || path.startsWith("/health/")
+                || path.startsWith("/api/auth/")
+                || path.equals("/api/handshake");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String jwt = null;
-        if (request.getCookies() != null) {
-            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if ("jwt_token".equals(cookie.getName())) {
-                    jwt = cookie.getValue();
-                    break;
-                }
-            }
-        }
+
+        String jwt = extractJwtFromCookie(request);
 
         if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String username = null;
+        String username;
         try {
             username = jwtService.extractUsername(jwt);
         } catch (RuntimeException ex) {
@@ -63,25 +61,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (jwtService.isTokenValid(jwt, userDetails)) {
-                // Verificar que el token tenga una sesión activa en BD
-                if (!sesionRepository.existsByTokenJWT(jwt)) {
+
+                // Blacklist: rechaza si el token fue revocado por logout
+                if (tokenRevocadoRepository.existsByToken(jwt)) {
                     filterChain.doFilter(request, response);
                     return;
                 }
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
                 );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractJwtFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if ("jwt_token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

@@ -1,8 +1,8 @@
-package com.hivehub.app.web;
+package com.hivehub.app.login.web;
 
-import com.hivehub.app.service.AuthService;
-import com.hivehub.app.web.dto.LoginRequest;
-import com.hivehub.app.web.dto.LoginResponse;
+import com.hivehub.app.login.service.AuthService;
+import com.hivehub.app.login.web.dto.LoginRequest;
+import com.hivehub.app.login.web.dto.LoginResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

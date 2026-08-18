@@ -1,15 +1,13 @@
 package com.hivehub.app.service;
 
-import com.hivehub.app.domain.Sesion;
-import com.hivehub.app.domain.User;
-import com.hivehub.app.repository.SesionRepository;
-import com.hivehub.app.repository.UserRepository;
-import com.hivehub.app.security.JwtService;
+import com.hivehub.app.login.domain.User;
+import com.hivehub.app.login.service.AuthService;
+import com.hivehub.app.login.domain.UserRepository;
+import com.hivehub.app.login.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;

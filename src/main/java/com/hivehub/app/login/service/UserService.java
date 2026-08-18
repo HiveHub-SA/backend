@@ -1,7 +1,7 @@
-package com.hivehub.app.service;
+package com.hivehub.app.login.service;
 
-import com.hivehub.app.domain.User;
-import com.hivehub.app.repository.UserRepository;
+import com.hivehub.app.login.domain.User;
+import com.hivehub.app.login.domain.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

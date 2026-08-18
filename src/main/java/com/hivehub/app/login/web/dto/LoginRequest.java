@@ -1,4 +1,4 @@
-package com.hivehub.app.web.dto;
+package com.hivehub.app.login.web.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

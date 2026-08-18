@@ -1,8 +1,9 @@
 package com.hivehub.app.web;
 
-import com.hivehub.app.service.AuthService;
-import com.hivehub.app.web.dto.LoginRequest;
-import com.hivehub.app.web.dto.LoginResponse;
+import com.hivehub.app.login.service.AuthService;
+import com.hivehub.app.login.web.AuthController;
+import com.hivehub.app.login.web.dto.LoginRequest;
+import com.hivehub.app.login.web.dto.LoginResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

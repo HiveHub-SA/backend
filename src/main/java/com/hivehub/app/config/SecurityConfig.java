@@ -1,7 +1,7 @@
 package com.hivehub.app.config;
 
-import com.hivehub.app.security.CustomUserDetailsService;
-import com.hivehub.app.security.JwtAuthenticationFilter;
+import com.hivehub.app.login.security.CustomUserDetailsService;
+import com.hivehub.app.login.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,11 +42,16 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas públicas
+
+
+                        //Ya que ahora el filtro no consulta la BD en logout, Spring security va a bloquear la ruta
+                        //si el token expira, por eso es necesario agregar aca tambien
+                        .requestMatchers("/api/auth/logout").permitAll()
+
+
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/health/**").permitAll()
                         .requestMatchers("/api/handshake").permitAll()
-                        // Todo lo demás requiere autenticación
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

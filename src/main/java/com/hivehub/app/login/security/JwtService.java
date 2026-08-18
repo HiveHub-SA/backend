@@ -1,4 +1,4 @@
-package com.hivehub.app.security;
+package com.hivehub.app.login.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

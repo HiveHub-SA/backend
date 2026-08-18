@@ -1,4 +1,4 @@
-package com.hivehub.app.domain;
+package com.hivehub.app.login.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

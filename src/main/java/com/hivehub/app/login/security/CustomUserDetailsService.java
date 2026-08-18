@@ -1,7 +1,7 @@
-package com.hivehub.app.security;
+package com.hivehub.app.login.security;
 
-import com.hivehub.app.domain.User;
-import com.hivehub.app.repository.UserRepository;
+import com.hivehub.app.login.domain.User;
+import com.hivehub.app.login.domain.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
