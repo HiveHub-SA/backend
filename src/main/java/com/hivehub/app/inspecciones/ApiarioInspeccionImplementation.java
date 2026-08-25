@@ -94,6 +94,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .apiario(apiario)
                 .fecha(dto.getFecha() != null ? dto.getFecha() : LocalDateTime.now())
                 .floracion(floracion)
+                .varroa(dto.getVarroa() != null ? dto.getVarroa() : "NO_DETECTADA")
                 .estado(dto.getEstado() != null ? dto.getEstado() : "EN_BORRADOR")
                 .build();
 
@@ -114,6 +115,22 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .orElseThrow(() -> new IllegalArgumentException("Inspección no encontrada con id: " + id));
 
         inspeccion.setFloracion(floracion);
+        return toDTO(inspeccionRepository.save(inspeccion));
+    }
+
+    /**
+     * Actualiza la presencia/nivel de varroa en una inspección de apiario (US 43).
+     *
+     * @param id ID de la inspección
+     * @param varroa Presencia de varroa ("NO_DETECTADA" | "DETECTADA")
+     * @return InspeccionDTO actualizado
+     */
+    @Override
+    public InspeccionDTO updateVarroa(Long id, String varroa) {
+        Inspeccion inspeccion = inspeccionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Inspección no encontrada con id: " + id));
+
+        inspeccion.setVarroa(varroa);
         return toDTO(inspeccionRepository.save(inspeccion));
     }
 
@@ -143,6 +160,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .id(inspeccion.getId())
                 .fecha(inspeccion.getFecha())
                 .floracion(inspeccion.getFloracion())
+                .varroa(inspeccion.getVarroa() != null ? inspeccion.getVarroa() : "NO_DETECTADA")
                 .estado(inspeccion.getEstado())
                 .apiarioId(inspeccion.getApiario() != null ? inspeccion.getApiario().getId() : null)
                 .build();
@@ -163,7 +181,6 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .orElse(InspeccionColmenaDTO.builder()
                         .inspeccionId(inspeccionId)
                         .colmenaId(colmenaId)
-                        .varroa("NO_DETECTADA")
                         .estadoReina("VISTA_Y_SANA")
                         .nivelAlimento("MEDIO")
                         .produjoMiel(false)
@@ -176,7 +193,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
      *
      * @param inspeccionId ID de la inspección general de apiario
      * @param colmenaId ID de la colmena inspeccionada
-     * @param dto DTO con los campos completados (Varroa, Reina, Alimento, Miel, Observaciones)
+     * @param dto DTO con los campos completados (Reina, Alimento, Miel, Observaciones)
      * @return DTO actualizado almacenado en la base de datos
      */
     @Override
@@ -195,7 +212,6 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                         .colmena(colmena)
                         .build());
 
-        entity.setVarroa(dto.getVarroa());
         entity.setEstadoReina(dto.getEstadoReina());
         entity.setNivelAlimento(dto.getNivelAlimento());
         entity.setProdujoMiel(dto.getProdujoMiel());
@@ -242,7 +258,6 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .inspeccionId(entity.getInspeccion() != null ? entity.getInspeccion().getId() : null)
                 .colmenaId(entity.getColmena() != null ? entity.getColmena().getId() : null)
                 .colmenaName(entity.getColmena() != null ? entity.getColmena().getName() : null)
-                .varroa(entity.getVarroa())
                 .estadoReina(entity.getEstadoReina())
                 .nivelAlimento(entity.getNivelAlimento())
                 .produjoMiel(entity.getProdujoMiel())

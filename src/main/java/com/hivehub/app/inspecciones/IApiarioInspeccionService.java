@@ -32,6 +32,13 @@ public interface IApiarioInspeccionService {
     InspeccionDTO updateFloracion(Long id, String floracion);
 
     /**
+     * Actualiza la presencia/nivel de varroa en una inspección de apiario (US 43).
+     * @param id ID de la inspección
+     * @param varroa Presencia de varroa ("NO_DETECTADA" | "DETECTADA")
+     */
+    InspeccionDTO updateVarroa(Long id, String varroa);
+
+    /**
      * Cambia el estado de una inspección de "EN_BORRADOR" a "SINCRONIZADA" al finalizarla.
      * @param id ID de la inspección a finalizar
      */

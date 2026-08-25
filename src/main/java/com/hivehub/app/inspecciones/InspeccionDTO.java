@@ -31,6 +31,9 @@ public class InspeccionDTO {
     /** Estado actual ("EN_BORRADOR" | "SINCRONIZADA") */
     private String estado;
 
+    /** Presencia de Varroa a nivel de apiario (US 43): "NO_DETECTADA" | "DETECTADA" */
+    private String varroa;
+
     /** ID del apiario asociado */
     private Long apiarioId;
 }

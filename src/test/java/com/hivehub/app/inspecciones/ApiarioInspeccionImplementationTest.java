@@ -52,6 +52,7 @@ public class ApiarioInspeccionImplementationTest {
                 .id(1L)
                 .fecha(LocalDateTime.now())
                 .floracion("Girasol")
+                .varroa("DETECTADA")
                 .estado("EN_BORRADOR")
                 .apiario(apiario)
                 .build();
@@ -63,6 +64,7 @@ public class ApiarioInspeccionImplementationTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Girasol", result.get(0).getFloracion());
+        assertEquals("DETECTADA", result.get(0).getVarroa());
         assertEquals("EN_BORRADOR", result.get(0).getEstado());
     }
 
@@ -94,7 +96,6 @@ public class ApiarioInspeccionImplementationTest {
                 .id(100L)
                 .inspeccion(inspeccion)
                 .colmena(colmena)
-                .varroa("NO_DETECTADA")
                 .estadoReina("VISTA_Y_SANA")
                 .nivelAlimento("ALTO")
                 .produjoMiel(true)
@@ -106,7 +107,6 @@ public class ApiarioInspeccionImplementationTest {
         InspeccionColmenaDTO dtoInput = InspeccionColmenaDTO.builder()
                 .inspeccionId(1L)
                 .colmenaId(2L)
-                .varroa("NO_DETECTADA")
                 .estadoReina("VISTA_Y_SANA")
                 .nivelAlimento("ALTO")
                 .produjoMiel(true)
@@ -116,7 +116,6 @@ public class ApiarioInspeccionImplementationTest {
         InspeccionColmenaDTO result = service.saveInspeccionColmena(1L, 2L, dtoInput);
 
         assertNotNull(result);
-        assertEquals("NO_DETECTADA", result.getVarroa());
         assertEquals("VISTA_Y_SANA", result.getEstadoReina());
         assertTrue(result.getProdujoMiel());
     }
