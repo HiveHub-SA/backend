@@ -21,10 +21,10 @@ public class ReporteController {
     private final IReporteTemporadaService reporteService;
 
     /**
-     * GET /hivehub/reportes/cierre-temporada
+     * GET /hivehub/reportes
      * Retorna el reporte consolidado de cierre de temporada con las 6 estadísticas clave.
      */
-    @GetMapping("/cierre-temporada")
+    @GetMapping
     public ResponseEntity<ReporteCierreTemporadaDTO> getReporteCierreTemporada(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {

@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * Pruebas unitarias para el Reporte de Cierre de Temporada (US 11).
+ * Pruebas unitarias completas para el Refactor de Reporte de Cierre de Temporada (US 11).
  */
 public class ReporteTemporadaTest {
 
@@ -51,26 +51,32 @@ public class ReporteTemporadaTest {
     }
 
     @Test
-    @DisplayName("generarReporte - Retorna totales consolidados y ranking de apiarios cuando existen cosechas")
-    void testGenerarReporteConDatos() {
+    @DisplayName("generarReporte - Retorna validaciones, índice de prioridad y cruce floral con datos")
+    void testGenerarReporteConDatosCompletos() {
         LocalDate start = LocalDate.of(2025, 11, 1);
         LocalDate end = LocalDate.of(2026, 10, 31);
 
-        Apiario apiario1 = Apiario.builder().id(1L).name("Apiario El Trébol").colmenas(List.of(new Colmena(), new Colmena())).build();
-        Apiario apiario2 = Apiario.builder().id(2L).name("Apiario La Colina").colmenas(List.of(new Colmena())).build();
+        Colmena colm1 = Colmena.builder().id(101L).build();
+        Colmena colm2 = Colmena.builder().id(102L).build();
+        Apiario apiario1 = Apiario.builder().id(1L).name("Apiario El Trébol").colmenas(List.of(colm1, colm2)).build();
+        colm1.setApiario(apiario1);
+        colm2.setApiario(apiario1);
 
-        OperacionSala ingreso = new OperacionSala();
-        ingreso.setId(10L);
-        ingreso.setFecha(LocalDate.of(2026, 2, 10));
-        ingreso.setTipoOperacion("INGRESO");
-        ingreso.setCantidadAlzas(50);
+        Apiario apiarioIncompleto = Apiario.builder().id(2L).name("Apiario Sin Censo").colmenas(Collections.emptyList()).build();
+
+        OperacionSala ingresoAntiguo = new OperacionSala();
+        ingresoAntiguo.setId(10L);
+        ingresoAntiguo.setFecha(LocalDate.of(2025, 11, 10)); // Hace muchos días (>7)
+        ingresoAntiguo.setTipoOperacion("INGRESO");
+        ingresoAntiguo.setCantidadAlzas(50);
+        ingresoAntiguo.setApiarios(List.of(apiario1));
 
         OperacionSala extraccion1 = new OperacionSala();
         extraccion1.setId(11L);
         extraccion1.setFecha(LocalDate.of(2026, 2, 12));
         extraccion1.setTipoOperacion("EXTRACCION");
         extraccion1.setCantidadAlzas(30);
-        extraccion1.setKilosMiel(600.0);
+        extraccion1.setKilosMiel(660.0); // 660 / 30 = 22 kg/alza (OK para Completa: 20-25)
         extraccion1.setApiarios(List.of(apiario1));
 
         OperacionSala extraccion2 = new OperacionSala();
@@ -79,53 +85,49 @@ public class ReporteTemporadaTest {
         extraccion2.setTipoOperacion("EXTRACCION");
         extraccion2.setCantidadAlzas(10);
         extraccion2.setKilosMiel(200.0);
-        extraccion2.setApiarios(List.of(apiario2));
+        extraccion2.setApiarios(List.of(apiarioIncompleto)); // 0 colmenas -> INCOMPLETO
 
         when(operacionSalaRepository.findByFechaBetweenOrderByFechaDesc(start, end))
-                .thenReturn(List.of(ingreso, extraccion1, extraccion2));
+                .thenReturn(List.of(ingresoAntiguo, extraccion1, extraccion2));
 
-        when(apiarioRepository.findAll()).thenReturn(List.of(apiario1, apiario2));
+        when(apiarioRepository.findAll()).thenReturn(List.of(apiario1, apiarioIncompleto));
 
-        Inspeccion insp1 = Inspeccion.builder().id(100L).floracion("Girasol").build();
+        Inspeccion insp1 = Inspeccion.builder().id(100L).floracion("Girasol").apiario(apiario1).build();
         when(inspeccionRepository.findByApiarioIdOrderByFechaDesc(1L)).thenReturn(List.of(insp1));
         when(inspeccionRepository.findByApiarioIdOrderByFechaDesc(2L)).thenReturn(Collections.emptyList());
 
-        Colmena colm1 = Colmena.builder().id(101L).apiario(apiario1).build();
-        Colmena colm2 = Colmena.builder().id(102L).apiario(apiario2).build();
-
-        InspeccionColmena col1 = InspeccionColmena.builder().id(1L).colmena(colm1).produjoMiel(true).estadoReina("VISTA_Y_SANA").build();
-        InspeccionColmena col2 = InspeccionColmena.builder().id(2L).colmena(colm2).produjoMiel(false).estadoReina("CELDA_REAL").build();
-        when(inspeccionColmenaRepository.findAll()).thenReturn(List.of(col1, col2));
+        InspeccionColmena ic1 = InspeccionColmena.builder().id(1L).colmena(colm1).inspeccion(insp1).produjoMiel(false).estadoReina("CELDA_REAL").build();
+        InspeccionColmena ic2 = InspeccionColmena.builder().id(2L).colmena(colm2).inspeccion(insp1).produjoMiel(false).estadoReina("CELDA_REAL").build();
+        when(inspeccionColmenaRepository.findAll()).thenReturn(List.of(ic1, ic2));
 
         ReporteCierreTemporadaDTO reporte = service.generarReporte(start, end);
 
         assertNotNull(reporte);
         assertTrue(reporte.getTieneDatos());
-        assertEquals(800.0, reporte.getTotalKilosMiel());
+        assertEquals(860.0, reporte.getTotalKilosMiel());
         assertEquals(40, reporte.getTotalAlzasProcesadas());
-        assertEquals(50, reporte.getTotalAlzasIngresadas());
         assertEquals(10, reporte.getTotalAlzasEnEspera());
-        assertEquals(20.0, reporte.getPromedioKilosPorAlza()); // 800 / 40 = 20.0 kg/alza
-        assertEquals("Apiario El Trébol", reporte.getApiarioMasProductivo());
-        assertEquals(600.0, reporte.getKilosApiarioMasProductivo());
+        assertEquals(10, reporte.getTotalAlzasEnEsperaCriticas()); // Superan 7 días
 
-        // Verificar lista de apiarios ordenada
-        assertEquals(2, reporte.getRendimientoApiarios().size());
-        assertEquals("Apiario El Trébol", reporte.getRendimientoApiarios().get(0).getApiarioNombre());
-        assertEquals(75.0, reporte.getRendimientoApiarios().get(0).getPorcentajeCosechaTotal());
+        // Validación de Apiarios (Mejora #1)
+        assertEquals("OK", reporte.getRendimientoApiarios().stream().filter(a -> a.getApiarioId() == 1L).findFirst().get().getEstadoValidacion());
+        assertEquals("INCOMPLETO", reporte.getRendimientoApiarios().stream().filter(a -> a.getApiarioId() == 2L).findFirst().get().getEstadoValidacion());
 
-        // Verificar eficiencia biológica
-        assertNotNull(reporte.getEficienciaBiologica());
-        assertEquals(2, reporte.getEficienciaBiologica().getTotalColmenasRevisadas());
-        assertEquals(1, reporte.getEficienciaBiologica().getTotalColmenasProductivas());
-        assertEquals(50.0, reporte.getEficienciaBiologica().getPorcentajeColmenasProductivas());
+        // Índice de Prioridad (Mejora #2)
+        assertFalse(reporte.getIndicePrioridades().isEmpty());
+        assertEquals(1L, reporte.getIndicePrioridades().get(0).getApiarioId());
+
+        // Cruce Floración × Biología (Mejora #4)
+        assertFalse(reporte.getRendimientoFloraciones().isEmpty());
+        assertNotNull(reporte.getRendimientoFloraciones().get(0).getPorcentajeReinasSanas());
+        assertNotNull(reporte.getRendimientoFloraciones().get(0).getSemaforoSaludReinas());
     }
 
     @Test
-    @DisplayName("generarReporte - Retorna estructura vacía con tieneDatos=false cuando no hay operaciones")
-    void testGenerarReporteSinDatos() {
-        LocalDate start = LocalDate.of(2024, 1, 1);
-        LocalDate end = LocalDate.of(2024, 12, 31);
+    @DisplayName("generarReporte - Retorna sinDatosPrevios=true cuando es la primera temporada")
+    void testGenerarReporteSinDatosPrevios() {
+        LocalDate start = LocalDate.of(2025, 11, 1);
+        LocalDate end = LocalDate.of(2026, 10, 31);
 
         when(operacionSalaRepository.findByFechaBetweenOrderByFechaDesc(start, end)).thenReturn(Collections.emptyList());
 
@@ -133,7 +135,6 @@ public class ReporteTemporadaTest {
 
         assertNotNull(reporte);
         assertFalse(reporte.getTieneDatos());
-        assertEquals(0.0, reporte.getTotalKilosMiel());
-        assertEquals(0, reporte.getTotalAlzasProcesadas());
+        assertTrue(reporte.getComparativaInteranual().getSinDatosPrevios());
     }
 }

@@ -6,7 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO que representa el volumen y proporción de miel estimada según la floración predominante activa (US 11).
+ * DTO que representa el volumen de miel y el cruce con la salud biológica de
+ * reinas según la floración (Mejora #4).
  */
 @Data
 @NoArgsConstructor
@@ -17,4 +18,13 @@ public class RendimientoFloracionDTO {
     private Double totalKilosEstimados;
     private Integer cantidadApiarios;
     private Double porcentajeTotal;
+
+    /**
+     * Porcentaje promedio de reinas vistas y sanas en los apiarios de esta
+     * floración
+     */
+    private Double porcentajeReinasSanas;
+
+    /** Semáforo visual: "VERDE" (>70%) | "AMARILLO" (40-70%) | "ROJO" (<40%) */
+    private String semaforoSaludReinas;
 }
