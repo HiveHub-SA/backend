@@ -36,6 +36,9 @@ public class Inspeccion {
     /** Estado del registro: "EN_BORRADOR" (inspección en curso/offline) o "SINCRONIZADA" (finalizada) */
     private String estado;
 
+    /** Presencia de Varroa a nivel de apiario (US 43): "NO_DETECTADA" | "DETECTADA" */
+    private String varroa;
+
     /** Apiario al cual pertenece la inspección realizada */
     @ManyToOne
     @JoinColumn(name = "apiario_id", referencedColumnName = "id", nullable = false)
