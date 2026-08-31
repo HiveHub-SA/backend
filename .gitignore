@@ -74,3 +74,6 @@ crash.log
 .claude/
 .antigravity/
 .testsprite/
+
+#videos
+/uploads/videos
