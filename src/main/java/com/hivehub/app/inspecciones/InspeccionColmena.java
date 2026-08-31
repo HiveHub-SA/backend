@@ -30,9 +30,6 @@ public class InspeccionColmena {
     @JoinColumn(name = "colmena_id", referencedColumnName = "id", nullable = false)
     private Colmena colmena;
 
-    /** Presencia de Varroa: "NO_DETECTADA" | "DETECTADA" */
-    private String varroa;
-
     /** Estado de la Reina: "VISTA_Y_SANA" | "NO_VISTA" | "CELDA_REAL" | "AUSENTE" */
     private String estadoReina;
 

@@ -56,6 +56,16 @@ public class InspeccionController {
     }
 
     /**
+     * PUT /hivehub/inspecciones/{id}/varroa
+     * Actualiza la presencia de varroa en la inspección de apiario (US 43).
+     */
+    @PutMapping("/inspecciones/{id}/varroa")
+    public ResponseEntity<InspeccionDTO> updateVarroa(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        String varroa = payload.get("varroa");
+        return ResponseEntity.ok(inspeccionService.updateVarroa(id, varroa));
+    }
+
+    /**
      * PUT /hivehub/inspecciones/{id}/finalizar
      * Marca una inspección en borrador como finalizada/sincronizada.
      */
