@@ -1,6 +1,6 @@
 package com.hivehub.app.login.security;
 
-import com.hivehub.app.login.domain.TokenRevocadoRepository;
+import com.hivehub.app.login.blacklist.TokenRevocadoRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

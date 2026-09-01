@@ -1,4 +1,4 @@
-package com.hivehub.app.login.domain;
+package com.hivehub.app.login.blacklist;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,6 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Builder
 @Table(name = "token_revocado")
 public class TokenRevocado {
 
@@ -28,5 +27,4 @@ public class TokenRevocado {
 
     @Column(nullable = false)
     private Instant expiracion; // para que el cleanup sepa cuándo borrarlo
-
 }

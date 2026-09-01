@@ -47,7 +47,7 @@ public class SecurityConfig {
                         //Ya que ahora el filtro no consulta la BD en logout, Spring security va a bloquear la ruta
                         //si el token expira, por eso es necesario agregar aca tambien
                         .requestMatchers("/api/auth/logout").permitAll()
-
+                        .requestMatchers("/api/admin/**").permitAll()
 
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/health/**").permitAll()

@@ -1,6 +1,6 @@
 package com.hivehub.app.web;
 
-import com.hivehub.app.login.service.AuthService;
+import com.hivehub.app.login.auth.AuthService;
 import com.hivehub.app.login.web.AuthController;
 import com.hivehub.app.login.web.dto.LoginRequest;
 import com.hivehub.app.login.web.dto.LoginResponse;

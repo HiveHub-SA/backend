@@ -1,9 +1,9 @@
 package com.hivehub.app.service;
 
-import com.hivehub.app.login.domain.TokenRevocado;
-import com.hivehub.app.login.domain.TokenRevocadoRepository;
-import com.hivehub.app.login.domain.UserRepository;
-import com.hivehub.app.login.service.AuthService;
+import com.hivehub.app.login.blacklist.TokenRevocado;
+import com.hivehub.app.login.blacklist.TokenRevocadoRepository;
+import com.hivehub.app.login.user.UserRepository;
+import com.hivehub.app.login.auth.AuthService;
 import com.hivehub.app.login.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

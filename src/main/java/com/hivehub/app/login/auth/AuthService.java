@@ -1,19 +1,14 @@
-package com.hivehub.app.login.service;
+package com.hivehub.app.login.auth;
 
-import com.hivehub.app.login.domain.TokenRevocado;
-import com.hivehub.app.login.domain.TokenRevocadoRepository;
-import com.hivehub.app.login.domain.User;
-import com.hivehub.app.login.domain.UserRepository;
+import com.hivehub.app.login.blacklist.TokenRevocado;
+import com.hivehub.app.login.blacklist.TokenRevocadoRepository;
 import com.hivehub.app.login.security.JwtService;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 
@@ -31,9 +26,7 @@ public class AuthService {
 
     public AuthService(AuthenticationManager authenticationManager,
                        JwtService jwtService,
-                       TokenRevocadoRepository tokenRevocadoRepository,
-                       UserRepository userRepository,
-                       @Value("${app.security.jwt.expiration-ms:86400000}") long expirationMs) {
+                       TokenRevocadoRepository tokenRevocadoRepository) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.tokenRevocadoRepository = tokenRevocadoRepository;

@@ -1,6 +1,6 @@
 package com.hivehub.app.login.task;
 
-import com.hivehub.app.login.domain.TokenRevocadoRepository;
+import com.hivehub.app.login.blacklist.TokenRevocadoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

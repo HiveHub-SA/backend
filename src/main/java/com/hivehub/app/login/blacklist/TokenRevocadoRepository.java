@@ -1,4 +1,4 @@
-package com.hivehub.app.login.domain;
+package com.hivehub.app.login.blacklist;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

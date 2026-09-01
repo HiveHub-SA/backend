@@ -1,4 +1,4 @@
-package com.hivehub.app.login.web;
+package com.hivehub.app;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

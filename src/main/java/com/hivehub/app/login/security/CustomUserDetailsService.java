@@ -1,13 +1,19 @@
 package com.hivehub.app.login.security;
 
-import com.hivehub.app.login.domain.User;
-import com.hivehub.app.login.domain.UserRepository;
+import com.hivehub.app.login.user.User;
+import com.hivehub.app.login.user.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+
+/*
+Del framework spring security, es la interfaz que Spring Security usa para cargar los detalles
+del usuario durante la autenticación. Implementamos esta interfaz para que Spring Security pueda
+obtener los detalles del usuario desde nuestra base de datos.
+*/
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
