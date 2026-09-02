@@ -64,4 +64,11 @@ public interface IApiarioInspeccionService {
      * @param id ID de la inspección a eliminar
      */
     void deleteInspeccion(Long id);
+
+    /**
+     * Sincroniza atómicamente un paquete completo de inspección generado en modo offline (US 05).
+     * @param dto Paquete de inspección con metadatos generales y lista de colmenas
+     * @return DTO de la inspección persistida o la existente si ya fue sincronizada (idempotente)
+     */
+    InspeccionDTO sincronizarInspeccionCompleta(InspeccionDTO dto);
 }

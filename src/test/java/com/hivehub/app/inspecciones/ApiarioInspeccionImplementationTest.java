@@ -69,6 +69,79 @@ public class ApiarioInspeccionImplementationTest {
     }
 
     @Test
+    @DisplayName("sincronizarInspeccionCompleta - Guarda inspección completa con colmenas en modo offline")
+    void testSincronizarInspeccionCompleta_Nuevo() {
+        Apiario apiario = Apiario.builder().id(10L).name("Panal del Sol").build();
+        Colmena colm = Colmena.builder().id(101L).name("C-01").build();
+
+        when(inspeccionRepository.findByUuidLocal("uuid-1234")).thenReturn(Optional.empty());
+        when(apiarioRepository.findById(10L)).thenReturn(apiario);
+        when(colmenaRepository.findById(101L)).thenReturn(colm);
+
+        Inspeccion saved = Inspeccion.builder()
+                .id(1L)
+                .uuidLocal("uuid-1234")
+                .apiario(apiario)
+                .floracion("Eucalipto")
+                .varroa("NO_DETECTADA")
+                .estado("SINCRONIZADA")
+                .build();
+        when(inspeccionRepository.save(any(Inspeccion.class))).thenReturn(saved);
+
+        InspeccionColmenaDTO cDto = InspeccionColmenaDTO.builder()
+                .colmenaId(101L)
+                .estadoReina("VISTA_Y_SANA")
+                .nivelAlimento("ALTO")
+                .produjoMiel(true)
+                .observaciones("Fuerte")
+                .build();
+
+        InspeccionDTO dto = InspeccionDTO.builder()
+                .uuidLocal("uuid-1234")
+                .apiarioId(10L)
+                .floracion("Eucalipto")
+                .varroa("NO_DETECTADA")
+                .colmenas(List.of(cDto))
+                .build();
+
+        InspeccionDTO result = service.sincronizarInspeccionCompleta(dto);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("uuid-1234", result.getUuidLocal());
+        assertEquals("SINCRONIZADA", result.getEstado());
+        verify(inspeccionColmenaRepository, times(1)).save(any(InspeccionColmena.class));
+    }
+
+    @Test
+    @DisplayName("sincronizarInspeccionCompleta - Idempotente: Si el uuidLocal ya existe, retorna la existente sin duplicar")
+    void testSincronizarInspeccionCompleta_Idempotente() {
+        Apiario apiario = Apiario.builder().id(10L).name("Panal del Sol").build();
+        Inspeccion existente = Inspeccion.builder()
+                .id(99L)
+                .uuidLocal("uuid-duplicado")
+                .apiario(apiario)
+                .floracion("Trebol")
+                .estado("SINCRONIZADA")
+                .build();
+
+        when(inspeccionRepository.findByUuidLocal("uuid-duplicado")).thenReturn(Optional.of(existente));
+
+        InspeccionDTO dto = InspeccionDTO.builder()
+                .uuidLocal("uuid-duplicado")
+                .apiarioId(10L)
+                .build();
+
+        InspeccionDTO result = service.sincronizarInspeccionCompleta(dto);
+
+        assertNotNull(result);
+        assertEquals(99L, result.getId());
+        assertEquals("uuid-duplicado", result.getUuidLocal());
+        verify(inspeccionRepository, never()).save(any(Inspeccion.class));
+        verify(inspeccionColmenaRepository, never()).save(any(InspeccionColmena.class));
+    }
+
+    @Test
     @DisplayName("deleteInspeccion - Ejecuta borrado en cascada en repositorios")
     void testDeleteInspeccion() {
         Long inspeccionId = 5L;

@@ -19,4 +19,14 @@ public interface IApiarioInspeccionRepository extends JpaRepository<Inspeccion, 
      * @return Lista de inspecciones ordenadas de la más reciente a la más antigua
      */
     List<Inspeccion> findByApiarioIdOrderByFechaDesc(Long apiarioId);
+
+    /**
+     * Busca una inspección por su UUID local generado en modo offline (US 05).
+     */
+    java.util.Optional<Inspeccion> findByUuidLocal(String uuidLocal);
+
+    /**
+     * Verifica si ya fue sincronizada una inspección con este UUID local.
+     */
+    boolean existsByUuidLocal(String uuidLocal);
 }
