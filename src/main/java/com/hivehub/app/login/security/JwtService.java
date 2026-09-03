@@ -36,15 +36,15 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractUsername(String token) {
+    public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             Claims claims = extractAllClaims(token);
-            final String username = claims.getSubject();
-            return username.equals(userDetails.getUsername()) && !isTokenExpired(claims);
+            final String email = claims.getSubject();
+            return email.equals(userDetails.getUsername()) && !isTokenExpired(claims);
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

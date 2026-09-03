@@ -1,13 +1,15 @@
-package com.hivehub.app.login.web.dto;
+package com.hivehub.app.login.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
  * DTO de solicitud de inicio de sesión.
  */
 public record LoginRequest(
-        @NotBlank(message = "El nombre de usuario es requerido")
-        String username,
+        @NotBlank(message = "El email es requerido")
+        @Email(message = "Debe ser un email válido")
+        String email,
 
         @NotBlank(message = "La contraseña es requerida")
         String password

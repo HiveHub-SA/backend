@@ -1,8 +1,7 @@
-package com.hivehub.app.login.web;
+package com.hivehub.app.login.auth;
 
-import com.hivehub.app.login.auth.AuthService;
-import com.hivehub.app.login.web.dto.LoginRequest;
-import com.hivehub.app.login.web.dto.LoginResponse;
+import com.hivehub.app.login.dto.LoginRequest;
+import com.hivehub.app.login.dto.LoginResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +23,13 @@ public class AuthController {
     }
 
     /**
-     * Inicia sesión con nombre de usuario y contraseña.
+     * Inicia sesión con email y contraseña.
      * Retorna un token JWT oculto en una cookie HttpOnly.
      */
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        String token = authService.login(request.username(), request.password());
+        String token = authService.login(request.email(), request.password());
         
         ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
                 .httpOnly(true)
@@ -40,7 +40,7 @@ public class AuthController {
                 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new LoginResponse(request.username()));
+                .body(new LoginResponse(request.email()));
     }
 
     /**
