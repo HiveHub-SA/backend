@@ -25,9 +25,20 @@ public class AIFormFillerServiceImplementation implements AIFormFillerService{
 
     @Value("${groq.model}")
     private String model;
+    
+    private final ObjectMapper objectMapper;
+    private final HttpClient httpClient;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    //Constructor del mapeador de objetos y cliente http para usar en produccion
+    public AIFormFillerServiceImplementation(){
+        this(new ObjectMapper(), HttpClient.newHttpClient());
+    }
+
+    //Constructor que se usa en los test para inyectar mocks
+    AIFormFillerServiceImplementation(ObjectMapper objectMapper, HttpClient httpClient){
+        this.objectMapper = objectMapper;
+        this.httpClient = httpClient;
+    }
 
     // Whitelists de valores validos para los campos enum del formulario.
     // Se usan en validarYMapear() para descartar cualquier valor que la IA devuelva pero que no coincida exactamente con lo que espera el frontend
