@@ -14,8 +14,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Servicio de implementación de la lógica de negocio para las inspecciones de apiarios.
- * Proporciona métodos para consultar el historial de inspecciones, registrar borradores,
+ * Servicio de implementación de la lógica de negocio para las inspecciones de
+ * apiarios.
+ * Proporciona métodos para consultar el historial de inspecciones, registrar
+ * borradores,
  * actualizar la floración predominante y cambiar el estado a sincronizado.
  */
 @Service
@@ -34,7 +36,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
 
     /**
      * Inicialización posterior a la construcción del bean.
-     * Carga registros iniciales de demostración en la base de datos si esta no posee registros previos.
+     * Carga registros iniciales de demostración en la base de datos si esta no
+     * posee registros previos.
      */
     @PostConstruct
     public void init() {
@@ -42,7 +45,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Obtiene todas las inspecciones de un apiario en orden cronológico descendente.
+     * Obtiene todas las inspecciones de un apiario en orden cronológico
+     * descendente.
      *
      * @param apiarioId Identificador único del apiario
      * @return Lista de InspeccionDTO pertenecientes al apiario
@@ -72,7 +76,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
      * Crea un nuevo registro de inspección para el apiario especificado.
      *
      * @param apiarioId ID del apiario
-     * @param dto DTO con los datos de fecha, floración y estado inicial
+     * @param dto       DTO con los datos de fecha, floración y estado inicial
      * @return DTO de la inspección creada y almacenada
      */
     @Override
@@ -84,8 +88,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
         String floracion = dto.getFloracion();
         if (floracion == null || floracion.isBlank()) {
             List<Inspeccion> previas = inspeccionRepository.findByApiarioIdOrderByFechaDesc(apiarioId);
-            floracion = !previas.isEmpty() && previas.get(0).getFloracion() != null 
-                    ? previas.get(0).getFloracion() 
+            floracion = !previas.isEmpty() && previas.get(0).getFloracion() != null
+                    ? previas.get(0).getFloracion()
                     : "Girasol";
         }
 
@@ -105,7 +109,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     /**
      * Actualiza el tipo de floración predominante en una inspección de apiario.
      *
-     * @param id ID de la inspección
+     * @param id        ID de la inspección
      * @param floracion Nombre de la floración predominante elegida
      * @return InspeccionDTO actualizado
      */
@@ -121,7 +125,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     /**
      * Actualiza la presencia/nivel de varroa en una inspección de apiario (US 43).
      *
-     * @param id ID de la inspección
+     * @param id     ID de la inspección
      * @param varroa Presencia de varroa ("NO_DETECTADA" | "DETECTADA")
      * @return InspeccionDTO actualizado
      */
@@ -150,7 +154,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Mapea un objeto entidad {@link Inspeccion} hacia su DTO representativo {@link InspeccionDTO}.
+     * Mapea un objeto entidad {@link Inspeccion} hacia su DTO representativo
+     * {@link InspeccionDTO}.
      *
      * @param inspeccion Objeto entidad
      * @return Objeto DTO mapeado
@@ -167,11 +172,13 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Obtiene el detalle de inspección registrado para una colmena determinada (US 32).
-     * Si aún no se registró detalle para dicha colmena, retorna un DTO con valores por defecto.
+     * Obtiene el detalle de inspección registrado para una colmena determinada (US
+     * 32).
+     * Si aún no se registró detalle para dicha colmena, retorna un DTO con valores
+     * por defecto.
      *
      * @param inspeccionId Identificador de la inspección general
-     * @param colmenaId Identificador de la colmena
+     * @param colmenaId    Identificador de la colmena
      * @return InspeccionColmenaDTO con los datos sanitarios y operativos
      */
     @Override
@@ -181,19 +188,17 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .orElse(InspeccionColmenaDTO.builder()
                         .inspeccionId(inspeccionId)
                         .colmenaId(colmenaId)
-                        .estadoReina("VISTA_Y_SANA")
-                        .nivelAlimento("MEDIO")
-                        .produjoMiel(false)
-                        .observaciones("")
                         .build());
     }
 
     /**
-     * Guarda o actualiza el registro de inspección individual de una colmena (US 32).
+     * Guarda o actualiza el registro de inspección individual de una colmena (US
+     * 32).
      *
      * @param inspeccionId ID de la inspección general de apiario
-     * @param colmenaId ID de la colmena inspeccionada
-     * @param dto DTO con los campos completados (Reina, Alimento, Miel, Observaciones)
+     * @param colmenaId    ID de la colmena inspeccionada
+     * @param dto          DTO con los campos completados (Reina, Alimento, Miel,
+     *                     Observaciones)
      * @return DTO actualizado almacenado en la base de datos
      */
     @Override
@@ -221,7 +226,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Obtiene la lista de inspecciones individuales de colmenas asociadas a una inspección general.
+     * Obtiene la lista de inspecciones individuales de colmenas asociadas a una
+     * inspección general.
      *
      * @param inspeccionId Identificador de la inspección general
      * @return Lista de InspeccionColmenaDTO asociadas
@@ -247,7 +253,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Mapea un objeto entidad {@link InspeccionColmena} hacia su DTO representativo {@link InspeccionColmenaDTO}.
+     * Mapea un objeto entidad {@link InspeccionColmena} hacia su DTO representativo
+     * {@link InspeccionColmenaDTO}.
      *
      * @param entity Objeto entidad
      * @return Objeto DTO mapeado
