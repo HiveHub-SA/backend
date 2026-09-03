@@ -46,6 +46,15 @@ public class InspeccionController {
     }
 
     /**
+     * POST /hivehub/inspecciones/sincronizar
+     * Sincroniza un paquete de inspección completa generado en modo offline (US 05).
+     */
+    @PostMapping("/inspecciones/sincronizar")
+    public ResponseEntity<InspeccionDTO> sincronizarInspeccion(@RequestBody InspeccionDTO dto) {
+        return ResponseEntity.ok(inspeccionService.sincronizarInspeccionCompleta(dto));
+    }
+
+    /**
      * PUT /hivehub/inspecciones/{id}/floracion
      * Actualiza la variedad de floración de la inspección (US 35).
      */

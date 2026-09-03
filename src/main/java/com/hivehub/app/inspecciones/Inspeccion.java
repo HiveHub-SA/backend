@@ -39,6 +39,10 @@ public class Inspeccion {
     /** Presencia de Varroa a nivel de apiario (US 43): "NO_DETECTADA" | "DETECTADA" */
     private String varroa;
 
+    /** Identificador UUID v4 único generado en el cliente para sincronización offline idempotente (US 05) */
+    @Column(name = "uuid_local")
+    private String uuidLocal;
+
     /** Apiario al cual pertenece la inspección realizada */
     @ManyToOne
     @JoinColumn(name = "apiario_id", referencedColumnName = "id", nullable = false)

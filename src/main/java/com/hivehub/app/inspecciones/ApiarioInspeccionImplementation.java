@@ -167,15 +167,104 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .floracion(inspeccion.getFloracion())
                 .varroa(inspeccion.getVarroa() != null ? inspeccion.getVarroa() : "NO_DETECTADA")
                 .estado(inspeccion.getEstado())
+                .uuidLocal(inspeccion.getUuidLocal())
                 .apiarioId(inspeccion.getApiario() != null ? inspeccion.getApiario().getId() : null)
                 .build();
     }
 
     /**
-     * Obtiene el detalle de inspección registrado para una colmena determinada (US
-     * 32).
-     * Si aún no se registró detalle para dicha colmena, retorna un DTO con valores
-     * por defecto.
+<<<<<<< HEAD
+     * Sincroniza un paquete completo de inspección generado en modo offline (US 05).
+     * Garantiza idempotencia mediante el uuidLocal.
+     */
+    @Override
+    @Transactional
+    public InspeccionDTO sincronizarInspeccionCompleta(InspeccionDTO dto) {
+        if (dto.getUuidLocal() != null && !dto.getUuidLocal().isBlank()) {
+            java.util.Optional<Inspeccion> existente = inspeccionRepository.findByUuidLocal(dto.getUuidLocal());
+            if (existente.isPresent()) {
+                return toDTO(existente.get()); // Idempotencia: no duplicar si ya fue sincronizado
+            }
+        }
+
+        Long apiarioId = dto.getApiarioId();
+        if (apiarioId == null) {
+            throw new IllegalArgumentException("El apiarioId es obligatorio para sincronizar la inspección.");
+        }
+
+        Apiario apiario = apiarioRepository.findById(apiarioId.longValue());
+        if (apiario == null) {
+            throw new IllegalArgumentException("Apiario no encontrado con id: " + apiarioId);
+        }
+
+        String floracion = dto.getFloracion();
+        if (floracion == null || floracion.isBlank()) {
+            floracion = "Girasol";
+        }
+
+        // Buscar si existe un borrador previo en el servidor para actualizarlo en vez de duplicarlo
+        Inspeccion inspeccion = null;
+        if (dto.getId() != null && dto.getId() > 0) {
+            inspeccion = inspeccionRepository.findById(dto.getId()).orElse(null);
+        }
+        if (inspeccion == null) {
+            List<Inspeccion> borradoresExistentes = inspeccionRepository.findByApiarioIdOrderByFechaDesc(apiarioId)
+                    .stream()
+                    .filter(i -> "EN_BORRADOR".equalsIgnoreCase(i.getEstado()))
+                    .toList();
+            if (!borradoresExistentes.isEmpty()) {
+                inspeccion = borradoresExistentes.get(0);
+            }
+        }
+
+        if (inspeccion == null) {
+            inspeccion = Inspeccion.builder()
+                    .apiario(apiario)
+                    .fecha(dto.getFecha() != null ? dto.getFecha() : LocalDateTime.now())
+                    .floracion(floracion)
+                    .varroa(dto.getVarroa() != null ? dto.getVarroa() : "NO_DETECTADA")
+                    .estado("SINCRONIZADA")
+                    .uuidLocal(dto.getUuidLocal())
+                    .build();
+        } else {
+            inspeccion.setFecha(dto.getFecha() != null ? dto.getFecha() : inspeccion.getFecha());
+            inspeccion.setFloracion(floracion);
+            inspeccion.setVarroa(dto.getVarroa() != null ? dto.getVarroa() : inspeccion.getVarroa());
+            inspeccion.setEstado("SINCRONIZADA");
+            inspeccion.setUuidLocal(dto.getUuidLocal());
+        }
+
+        Inspeccion guardada = inspeccionRepository.save(inspeccion);
+
+        // Actualizar o insertar colmenas asociadas
+        if (dto.getColmenas() != null && !dto.getColmenas().isEmpty()) {
+            for (InspeccionColmenaDTO cDto : dto.getColmenas()) {
+                if (cDto.getColmenaId() == null) continue;
+                Colmena colmena = colmenaRepository.findById(cDto.getColmenaId().longValue());
+                if (colmena != null) {
+                    InspeccionColmena ic = inspeccionColmenaRepository
+                            .findByInspeccionIdAndColmenaId(guardada.getId(), colmena.getId())
+                            .orElse(InspeccionColmena.builder()
+                                    .inspeccion(guardada)
+                                    .colmena(colmena)
+                                    .build());
+
+                    ic.setEstadoReina(cDto.getEstadoReina() != null ? cDto.getEstadoReina() : "NO_VISTA");
+                    ic.setNivelAlimento(cDto.getNivelAlimento() != null ? cDto.getNivelAlimento() : "MEDIO");
+                    ic.setProdujoMiel(Boolean.TRUE.equals(cDto.getProdujoMiel()));
+                    ic.setObservaciones(cDto.getObservaciones());
+
+                    inspeccionColmenaRepository.save(ic);
+                }
+            }
+        }
+
+        return toDTO(guardada);
+    }
+
+    /**
+     * Obtiene el detalle de inspección registrado para una colmena determinada (US 32).
+     * Si aún no se registró detalle para dicha colmena, retorna un DTO limpio.
      *
      * @param inspeccionId Identificador de la inspección general
      * @param colmenaId    Identificador de la colmena
