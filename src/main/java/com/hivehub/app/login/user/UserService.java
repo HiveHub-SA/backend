@@ -26,12 +26,6 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    @Transactional(readOnly = true)
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
-
-
     @Transactional
     public User createUser(String email, String rawPassword) {
         if (userRepository.existsByEmail(email)) {

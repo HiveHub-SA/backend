@@ -11,10 +11,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Entidad JPA que representa a un usuario de la aplicación.
- * Contiene identificador, nombre de usuario y contraseña.
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,9 +21,6 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String username;
 
     @Column(nullable = false, unique = true)
     private String email;
