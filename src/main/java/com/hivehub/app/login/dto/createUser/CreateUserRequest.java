@@ -1,4 +1,4 @@
-package com.hivehub.app.login.dto;
+package com.hivehub.app.login.dto.createUser;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

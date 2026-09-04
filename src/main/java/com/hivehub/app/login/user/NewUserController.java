@@ -1,8 +1,8 @@
 package com.hivehub.app.login.user;
 
 
-import com.hivehub.app.login.dto.CreateUserRequest;
-import com.hivehub.app.login.dto.CreateUserResponse;
+import com.hivehub.app.login.dto.createUser.CreateUserRequest;
+import com.hivehub.app.login.dto.createUser.CreateUserResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -37,6 +37,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/health/**").permitAll()
                         .requestMatchers("/api/handshake").permitAll()
+
+                        .requestMatchers("/api/auth/forgot-password").permitAll()
+                        .requestMatchers("/api/auth/verify-code").permitAll()
+                        .requestMatchers("/api/auth/reset-password").permitAll()
+
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,4 +1,4 @@
-package com.hivehub.app.login.dto;
+package com.hivehub.app.login.dto.createUser;
 
 /**
  * DTO de respuesta al crear un usuario. Nunca incluye la contraseña.
