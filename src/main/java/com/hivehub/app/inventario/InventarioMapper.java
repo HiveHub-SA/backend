@@ -13,6 +13,7 @@ public class InventarioMapper {
                 .pesoInventario(inventario.getPesoInventario())
                 .tipoNombre(inventario.getTipoInventario().getName())
                 .cantidadMarcos(inventario.getTipoInventario().getCantidadMarcos())
+                .tamanoAlza(inventario.getTipoInventario().getTamanoAlza())
                 .colmenaId(inventario.getColmena() != null ? inventario.getColmena().getId() : null)
                 .build();
     }

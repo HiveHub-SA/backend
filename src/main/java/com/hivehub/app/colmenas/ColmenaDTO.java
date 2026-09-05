@@ -1,6 +1,7 @@
 package com.hivehub.app.colmenas;
 
 import com.hivehub.app.inventario.InventarioResponseDTO;
+import com.hivehub.app.inventario.tipoInventario.TamanoAlza;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class ColmenaDTO {
     private String name;
     private Long apiarioId;
     private LocalDateTime createdAt;
+    private TamanoAlza tamanoAlza;
 
     // Seleccion inv
     private List<Long> inventarioIds;

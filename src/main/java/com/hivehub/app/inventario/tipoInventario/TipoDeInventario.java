@@ -21,4 +21,8 @@ public class TipoDeInventario {
 
     @Column(name = "cantidad_marcos")
     private Integer cantidadMarcos;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tamano_alza")
+    private TamanoAlza tamanoAlza;
 }

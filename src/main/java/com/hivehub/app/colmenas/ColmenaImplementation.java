@@ -3,7 +3,6 @@ package com.hivehub.app.colmenas;
 import com.hivehub.app.apiarios.IApiarioRepository;
 import com.hivehub.app.inventario.Inventario;
 import com.hivehub.app.inventario.InventarioRepository;
-import com.hivehub.app.inventario.tipoInventario.TipoInventarioNombre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,12 +15,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ColmenaImplementation implements IColmenaService {
 
-    private static final int MAX_CAMARAS = 2;
-    private static final int MAX_ALZAS = 5;
-
     private final IColmenaRepository repository;
     private final IApiarioRepository apiarioRepository;
     private final InventarioRepository inventarioRepository;
+    private final ColmenaInventarioValidator inventarioValidator;
 
     @Override
     public List<Colmena> findAll() {
@@ -133,21 +130,8 @@ public class ColmenaImplementation implements IColmenaService {
                         "El inventario con id " + inv.getId() + " ya está asignado a otra colmena.");
             }
         }
-
-        long camaras = seleccion.stream()
-                .filter(i -> i.getTipoInventario() != null && i.getTipoInventario().getName() == TipoInventarioNombre.CAMARA)
-                .count();
-
-        long alzas = seleccion.stream()
-                .filter(i -> i.getTipoInventario() != null && i.getTipoInventario().getName() == TipoInventarioNombre.ALZA)
-                .count();
-                
-        if (camaras > MAX_CAMARAS) {
-            throw new IllegalArgumentException("Una colmena no puede tener más de " + MAX_CAMARAS + " cámaras.");
-        }
-        if (alzas > MAX_ALZAS) {
-            throw new IllegalArgumentException("Una colmena no puede tener más de " + MAX_ALZAS + " alzas.");
-        }
+        inventarioValidator.validarComposicion(colmena, seleccion);
+        repository.save(colmena);
 
         Set<Long> nuevosIds = seleccion.stream().map(Inventario::getId).collect(Collectors.toSet());
         List<Inventario> actuales = colmena.getInventarios() != null

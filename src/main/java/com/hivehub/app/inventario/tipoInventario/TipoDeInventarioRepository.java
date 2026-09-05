@@ -7,5 +7,5 @@ import java.util.Optional;
 
 @Repository
 public interface TipoDeInventarioRepository extends JpaRepository<TipoDeInventario, Long> {
-    Optional<TipoDeInventario> findByNameAndCantidadMarcos(TipoInventarioNombre name, Integer cantidadMarcos);
+    Optional<TipoDeInventario> findByNameAndCantidadMarcosAndTamanoAlza(TipoInventarioNombre name, Integer cantidadMarcos, TamanoAlza tamanoAlza);
 }

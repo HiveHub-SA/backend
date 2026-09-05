@@ -1,5 +1,6 @@
 package com.hivehub.app.inventario;
 
+import com.hivehub.app.inventario.tipoInventario.TamanoAlza;
 import com.hivehub.app.inventario.tipoInventario.TipoInventarioNombre;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,9 @@ public class InventarioController {
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(required = false) Boolean sinAsignar,
-            @RequestParam(required = false) TipoInventarioNombre tipo) {
-        List<Inventario> resultado = inventarioService.findAll(sinAsignar, tipo);
+            @RequestParam(required = false) TipoInventarioNombre tipo,
+            @RequestParam(required = false) TamanoAlza tamanoAlza) {
+        List<Inventario> resultado = inventarioService.findAll(sinAsignar, tipo, tamanoAlza);
         return ResponseEntity.ok(inventarioMapper.toDTO(resultado));
     }
 }
