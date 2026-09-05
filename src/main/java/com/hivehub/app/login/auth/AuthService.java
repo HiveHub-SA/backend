@@ -53,4 +53,18 @@ public class AuthService {
         revocado.setExpiracion(expiracion);
         tokenRevocadoRepository.save(revocado);
     }
+
+    @Transactional(readOnly = true)
+    public String me(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+        if (!jwtService.isTokenValid(token)) {
+            return null;
+        }
+        if (tokenRevocadoRepository.existsByToken(token)) {
+            return null;
+        }
+        return jwtService.extractEmail(token);
+    }
 }

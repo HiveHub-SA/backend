@@ -3,6 +3,7 @@ package com.hivehub.app.login.auth;
 import com.hivehub.app.login.dto.login.LoginRequest;
 import com.hivehub.app.login.dto.login.LoginResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,5 +64,14 @@ public class AuthController {
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<LoginResponse> me(@CookieValue(name = "jwt_token", required = false) String token) {
+        String email = authService.me(token);
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(new LoginResponse(email));
     }
 }
