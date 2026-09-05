@@ -37,6 +37,7 @@ public class AuthController {
                 .secure(false) // true si usaramos HTTPS (en un futuro)
                 .path("/")
                 .maxAge(24 * 60 * 60) // 24 horas
+                .sameSite("Lax")
                 .build();
                 
         return ResponseEntity.ok()
@@ -59,6 +60,7 @@ public class AuthController {
                 .secure(false)
                 .path("/")
                 .maxAge(0) // Expira la cookie
+                .sameSite("Lax")
                 .build();
                 
         return ResponseEntity.noContent()
