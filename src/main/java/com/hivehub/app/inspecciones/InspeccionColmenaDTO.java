@@ -17,7 +17,6 @@ public class InspeccionColmenaDTO {
     private Long inspeccionId;
     private Long colmenaId;
     private String colmenaName;
-    private String varroa;
     private String estadoReina;
     private String nivelAlimento;
     private Boolean produjoMiel;

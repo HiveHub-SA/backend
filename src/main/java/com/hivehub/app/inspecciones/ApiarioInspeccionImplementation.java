@@ -14,8 +14,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Servicio de implementación de la lógica de negocio para las inspecciones de apiarios.
- * Proporciona métodos para consultar el historial de inspecciones, registrar borradores,
+ * Servicio de implementación de la lógica de negocio para las inspecciones de
+ * apiarios.
+ * Proporciona métodos para consultar el historial de inspecciones, registrar
+ * borradores,
  * actualizar la floración predominante y cambiar el estado a sincronizado.
  */
 @Service
@@ -34,7 +36,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
 
     /**
      * Inicialización posterior a la construcción del bean.
-     * Carga registros iniciales de demostración en la base de datos si esta no posee registros previos.
+     * Carga registros iniciales de demostración en la base de datos si esta no
+     * posee registros previos.
      */
     @PostConstruct
     public void init() {
@@ -42,7 +45,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Obtiene todas las inspecciones de un apiario en orden cronológico descendente.
+     * Obtiene todas las inspecciones de un apiario en orden cronológico
+     * descendente.
      *
      * @param apiarioId Identificador único del apiario
      * @return Lista de InspeccionDTO pertenecientes al apiario
@@ -72,7 +76,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
      * Crea un nuevo registro de inspección para el apiario especificado.
      *
      * @param apiarioId ID del apiario
-     * @param dto DTO con los datos de fecha, floración y estado inicial
+     * @param dto       DTO con los datos de fecha, floración y estado inicial
      * @return DTO de la inspección creada y almacenada
      */
     @Override
@@ -84,8 +88,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
         String floracion = dto.getFloracion();
         if (floracion == null || floracion.isBlank()) {
             List<Inspeccion> previas = inspeccionRepository.findByApiarioIdOrderByFechaDesc(apiarioId);
-            floracion = !previas.isEmpty() && previas.get(0).getFloracion() != null 
-                    ? previas.get(0).getFloracion() 
+            floracion = !previas.isEmpty() && previas.get(0).getFloracion() != null
+                    ? previas.get(0).getFloracion()
                     : "Girasol";
         }
 
@@ -94,6 +98,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .apiario(apiario)
                 .fecha(dto.getFecha() != null ? dto.getFecha() : LocalDateTime.now())
                 .floracion(floracion)
+                .varroa(dto.getVarroa() != null ? dto.getVarroa() : "NO_DETECTADA")
                 .estado(dto.getEstado() != null ? dto.getEstado() : "EN_BORRADOR")
                 .build();
 
@@ -104,7 +109,7 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     /**
      * Actualiza el tipo de floración predominante en una inspección de apiario.
      *
-     * @param id ID de la inspección
+     * @param id        ID de la inspección
      * @param floracion Nombre de la floración predominante elegida
      * @return InspeccionDTO actualizado
      */
@@ -114,6 +119,22 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .orElseThrow(() -> new IllegalArgumentException("Inspección no encontrada con id: " + id));
 
         inspeccion.setFloracion(floracion);
+        return toDTO(inspeccionRepository.save(inspeccion));
+    }
+
+    /**
+     * Actualiza la presencia/nivel de varroa en una inspección de apiario (US 43).
+     *
+     * @param id     ID de la inspección
+     * @param varroa Presencia de varroa ("NO_DETECTADA" | "DETECTADA")
+     * @return InspeccionDTO actualizado
+     */
+    @Override
+    public InspeccionDTO updateVarroa(Long id, String varroa) {
+        Inspeccion inspeccion = inspeccionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Inspección no encontrada con id: " + id));
+
+        inspeccion.setVarroa(varroa);
         return toDTO(inspeccionRepository.save(inspeccion));
     }
 
@@ -133,7 +154,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Mapea un objeto entidad {@link Inspeccion} hacia su DTO representativo {@link InspeccionDTO}.
+     * Mapea un objeto entidad {@link Inspeccion} hacia su DTO representativo
+     * {@link InspeccionDTO}.
      *
      * @param inspeccion Objeto entidad
      * @return Objeto DTO mapeado
@@ -143,17 +165,109 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .id(inspeccion.getId())
                 .fecha(inspeccion.getFecha())
                 .floracion(inspeccion.getFloracion())
+                .varroa(inspeccion.getVarroa() != null ? inspeccion.getVarroa() : "NO_DETECTADA")
                 .estado(inspeccion.getEstado())
+                .uuidLocal(inspeccion.getUuidLocal())
                 .apiarioId(inspeccion.getApiario() != null ? inspeccion.getApiario().getId() : null)
                 .build();
     }
 
     /**
+<<<<<<< HEAD
+     * Sincroniza un paquete completo de inspección generado en modo offline (US 05).
+     * Garantiza idempotencia mediante el uuidLocal.
+     */
+    @Override
+    @Transactional
+    public InspeccionDTO sincronizarInspeccionCompleta(InspeccionDTO dto) {
+        if (dto.getUuidLocal() != null && !dto.getUuidLocal().isBlank()) {
+            java.util.Optional<Inspeccion> existente = inspeccionRepository.findByUuidLocal(dto.getUuidLocal());
+            if (existente.isPresent()) {
+                return toDTO(existente.get()); // Idempotencia: no duplicar si ya fue sincronizado
+            }
+        }
+
+        Long apiarioId = dto.getApiarioId();
+        if (apiarioId == null) {
+            throw new IllegalArgumentException("El apiarioId es obligatorio para sincronizar la inspección.");
+        }
+
+        Apiario apiario = apiarioRepository.findById(apiarioId.longValue());
+        if (apiario == null) {
+            throw new IllegalArgumentException("Apiario no encontrado con id: " + apiarioId);
+        }
+
+        String floracion = dto.getFloracion();
+        if (floracion == null || floracion.isBlank()) {
+            floracion = "Girasol";
+        }
+
+        // Buscar si existe un borrador previo en el servidor para actualizarlo en vez de duplicarlo
+        Inspeccion inspeccion = null;
+        if (dto.getId() != null && dto.getId() > 0) {
+            inspeccion = inspeccionRepository.findById(dto.getId()).orElse(null);
+        }
+        if (inspeccion == null) {
+            List<Inspeccion> borradoresExistentes = inspeccionRepository.findByApiarioIdOrderByFechaDesc(apiarioId)
+                    .stream()
+                    .filter(i -> "EN_BORRADOR".equalsIgnoreCase(i.getEstado()))
+                    .toList();
+            if (!borradoresExistentes.isEmpty()) {
+                inspeccion = borradoresExistentes.get(0);
+            }
+        }
+
+        if (inspeccion == null) {
+            inspeccion = Inspeccion.builder()
+                    .apiario(apiario)
+                    .fecha(dto.getFecha() != null ? dto.getFecha() : LocalDateTime.now())
+                    .floracion(floracion)
+                    .varroa(dto.getVarroa() != null ? dto.getVarroa() : "NO_DETECTADA")
+                    .estado("SINCRONIZADA")
+                    .uuidLocal(dto.getUuidLocal())
+                    .build();
+        } else {
+            inspeccion.setFecha(dto.getFecha() != null ? dto.getFecha() : inspeccion.getFecha());
+            inspeccion.setFloracion(floracion);
+            inspeccion.setVarroa(dto.getVarroa() != null ? dto.getVarroa() : inspeccion.getVarroa());
+            inspeccion.setEstado("SINCRONIZADA");
+            inspeccion.setUuidLocal(dto.getUuidLocal());
+        }
+
+        Inspeccion guardada = inspeccionRepository.save(inspeccion);
+
+        // Actualizar o insertar colmenas asociadas
+        if (dto.getColmenas() != null && !dto.getColmenas().isEmpty()) {
+            for (InspeccionColmenaDTO cDto : dto.getColmenas()) {
+                if (cDto.getColmenaId() == null) continue;
+                Colmena colmena = colmenaRepository.findById(cDto.getColmenaId().longValue());
+                if (colmena != null) {
+                    InspeccionColmena ic = inspeccionColmenaRepository
+                            .findByInspeccionIdAndColmenaId(guardada.getId(), colmena.getId())
+                            .orElse(InspeccionColmena.builder()
+                                    .inspeccion(guardada)
+                                    .colmena(colmena)
+                                    .build());
+
+                    ic.setEstadoReina(cDto.getEstadoReina() != null ? cDto.getEstadoReina() : "NO_VISTA");
+                    ic.setNivelAlimento(cDto.getNivelAlimento() != null ? cDto.getNivelAlimento() : "MEDIO");
+                    ic.setProdujoMiel(Boolean.TRUE.equals(cDto.getProdujoMiel()));
+                    ic.setObservaciones(cDto.getObservaciones());
+
+                    inspeccionColmenaRepository.save(ic);
+                }
+            }
+        }
+
+        return toDTO(guardada);
+    }
+
+    /**
      * Obtiene el detalle de inspección registrado para una colmena determinada (US 32).
-     * Si aún no se registró detalle para dicha colmena, retorna un DTO con valores por defecto.
+     * Si aún no se registró detalle para dicha colmena, retorna un DTO limpio.
      *
      * @param inspeccionId Identificador de la inspección general
-     * @param colmenaId Identificador de la colmena
+     * @param colmenaId    Identificador de la colmena
      * @return InspeccionColmenaDTO con los datos sanitarios y operativos
      */
     @Override
@@ -163,20 +277,17 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .orElse(InspeccionColmenaDTO.builder()
                         .inspeccionId(inspeccionId)
                         .colmenaId(colmenaId)
-                        .varroa("NO_DETECTADA")
-                        .estadoReina("VISTA_Y_SANA")
-                        .nivelAlimento("MEDIO")
-                        .produjoMiel(false)
-                        .observaciones("")
                         .build());
     }
 
     /**
-     * Guarda o actualiza el registro de inspección individual de una colmena (US 32).
+     * Guarda o actualiza el registro de inspección individual de una colmena (US
+     * 32).
      *
      * @param inspeccionId ID de la inspección general de apiario
-     * @param colmenaId ID de la colmena inspeccionada
-     * @param dto DTO con los campos completados (Varroa, Reina, Alimento, Miel, Observaciones)
+     * @param colmenaId    ID de la colmena inspeccionada
+     * @param dto          DTO con los campos completados (Reina, Alimento, Miel,
+     *                     Observaciones)
      * @return DTO actualizado almacenado en la base de datos
      */
     @Override
@@ -195,7 +306,6 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                         .colmena(colmena)
                         .build());
 
-        entity.setVarroa(dto.getVarroa());
         entity.setEstadoReina(dto.getEstadoReina());
         entity.setNivelAlimento(dto.getNivelAlimento());
         entity.setProdujoMiel(dto.getProdujoMiel());
@@ -205,7 +315,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Obtiene la lista de inspecciones individuales de colmenas asociadas a una inspección general.
+     * Obtiene la lista de inspecciones individuales de colmenas asociadas a una
+     * inspección general.
      *
      * @param inspeccionId Identificador de la inspección general
      * @return Lista de InspeccionColmenaDTO asociadas
@@ -231,7 +342,8 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
     }
 
     /**
-     * Mapea un objeto entidad {@link InspeccionColmena} hacia su DTO representativo {@link InspeccionColmenaDTO}.
+     * Mapea un objeto entidad {@link InspeccionColmena} hacia su DTO representativo
+     * {@link InspeccionColmenaDTO}.
      *
      * @param entity Objeto entidad
      * @return Objeto DTO mapeado
@@ -242,7 +354,6 @@ public class ApiarioInspeccionImplementation implements IApiarioInspeccionServic
                 .inspeccionId(entity.getInspeccion() != null ? entity.getInspeccion().getId() : null)
                 .colmenaId(entity.getColmena() != null ? entity.getColmena().getId() : null)
                 .colmenaName(entity.getColmena() != null ? entity.getColmena().getName() : null)
-                .varroa(entity.getVarroa())
                 .estadoReina(entity.getEstadoReina())
                 .nivelAlimento(entity.getNivelAlimento())
                 .produjoMiel(entity.getProdujoMiel())

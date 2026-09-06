@@ -31,6 +31,15 @@ public class InspeccionDTO {
     /** Estado actual ("EN_BORRADOR" | "SINCRONIZADA") */
     private String estado;
 
+    /** Presencia de Varroa a nivel de apiario (US 43): "NO_DETECTADA" | "DETECTADA" */
+    private String varroa;
+
+    /** Identificador único local UUID v4 para sincronización offline (US 05) */
+    private String uuidLocal;
+
     /** ID del apiario asociado */
     private Long apiarioId;
+
+    /** Detalle de colmenas inspeccionadas en este paquete (para sincronización offline en bloque) */
+    private java.util.List<InspeccionColmenaDTO> colmenas;
 }

@@ -32,6 +32,13 @@ public interface IApiarioInspeccionService {
     InspeccionDTO updateFloracion(Long id, String floracion);
 
     /**
+     * Actualiza la presencia/nivel de varroa en una inspección de apiario (US 43).
+     * @param id ID de la inspección
+     * @param varroa Presencia de varroa ("NO_DETECTADA" | "DETECTADA")
+     */
+    InspeccionDTO updateVarroa(Long id, String varroa);
+
+    /**
      * Cambia el estado de una inspección de "EN_BORRADOR" a "SINCRONIZADA" al finalizarla.
      * @param id ID de la inspección a finalizar
      */
@@ -57,4 +64,11 @@ public interface IApiarioInspeccionService {
      * @param id ID de la inspección a eliminar
      */
     void deleteInspeccion(Long id);
+
+    /**
+     * Sincroniza atómicamente un paquete completo de inspección generado en modo offline (US 05).
+     * @param dto Paquete de inspección con metadatos generales y lista de colmenas
+     * @return DTO de la inspección persistida o la existente si ya fue sincronizada (idempotente)
+     */
+    InspeccionDTO sincronizarInspeccionCompleta(InspeccionDTO dto);
 }

@@ -30,9 +30,25 @@ public class OperacionSalaControllerTest {
     @Autowired
     private com.hivehub.app.apiarios.IApiarioRepository apiarioRepository;
 
+    @Autowired
+    private com.hivehub.app.inspecciones.IInspeccionColmenaRepository inspeccionColmenaRepository;
+
+    @Autowired
+    private com.hivehub.app.inspecciones.IApiarioInspeccionRepository inspeccionRepository;
+
+    @Autowired
+    private com.hivehub.app.inventario.InventarioRepository inventarioRepository;
+
+    @Autowired
+    private com.hivehub.app.colmenas.IColmenaRepository colmenaRepository;
+
     @BeforeEach
     void setUp() {
         repository.deleteAll();
+        inspeccionColmenaRepository.deleteAll();
+        inspeccionRepository.deleteAll();
+        inventarioRepository.deleteAll();
+        colmenaRepository.deleteAll();
         apiarioRepository.deleteAll();
     }
 

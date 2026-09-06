@@ -52,6 +52,7 @@ public class ApiarioInspeccionImplementationTest {
                 .id(1L)
                 .fecha(LocalDateTime.now())
                 .floracion("Girasol")
+                .varroa("DETECTADA")
                 .estado("EN_BORRADOR")
                 .apiario(apiario)
                 .build();
@@ -63,7 +64,81 @@ public class ApiarioInspeccionImplementationTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Girasol", result.get(0).getFloracion());
+        assertEquals("DETECTADA", result.get(0).getVarroa());
         assertEquals("EN_BORRADOR", result.get(0).getEstado());
+    }
+
+    @Test
+    @DisplayName("sincronizarInspeccionCompleta - Guarda inspección completa con colmenas en modo offline")
+    void testSincronizarInspeccionCompleta_Nuevo() {
+        Apiario apiario = Apiario.builder().id(10L).name("Panal del Sol").build();
+        Colmena colm = Colmena.builder().id(101L).name("C-01").build();
+
+        when(inspeccionRepository.findByUuidLocal("uuid-1234")).thenReturn(Optional.empty());
+        when(apiarioRepository.findById(10L)).thenReturn(apiario);
+        when(colmenaRepository.findById(101L)).thenReturn(colm);
+
+        Inspeccion saved = Inspeccion.builder()
+                .id(1L)
+                .uuidLocal("uuid-1234")
+                .apiario(apiario)
+                .floracion("Eucalipto")
+                .varroa("NO_DETECTADA")
+                .estado("SINCRONIZADA")
+                .build();
+        when(inspeccionRepository.save(any(Inspeccion.class))).thenReturn(saved);
+
+        InspeccionColmenaDTO cDto = InspeccionColmenaDTO.builder()
+                .colmenaId(101L)
+                .estadoReina("VISTA_Y_SANA")
+                .nivelAlimento("ALTO")
+                .produjoMiel(true)
+                .observaciones("Fuerte")
+                .build();
+
+        InspeccionDTO dto = InspeccionDTO.builder()
+                .uuidLocal("uuid-1234")
+                .apiarioId(10L)
+                .floracion("Eucalipto")
+                .varroa("NO_DETECTADA")
+                .colmenas(List.of(cDto))
+                .build();
+
+        InspeccionDTO result = service.sincronizarInspeccionCompleta(dto);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("uuid-1234", result.getUuidLocal());
+        assertEquals("SINCRONIZADA", result.getEstado());
+        verify(inspeccionColmenaRepository, times(1)).save(any(InspeccionColmena.class));
+    }
+
+    @Test
+    @DisplayName("sincronizarInspeccionCompleta - Idempotente: Si el uuidLocal ya existe, retorna la existente sin duplicar")
+    void testSincronizarInspeccionCompleta_Idempotente() {
+        Apiario apiario = Apiario.builder().id(10L).name("Panal del Sol").build();
+        Inspeccion existente = Inspeccion.builder()
+                .id(99L)
+                .uuidLocal("uuid-duplicado")
+                .apiario(apiario)
+                .floracion("Trebol")
+                .estado("SINCRONIZADA")
+                .build();
+
+        when(inspeccionRepository.findByUuidLocal("uuid-duplicado")).thenReturn(Optional.of(existente));
+
+        InspeccionDTO dto = InspeccionDTO.builder()
+                .uuidLocal("uuid-duplicado")
+                .apiarioId(10L)
+                .build();
+
+        InspeccionDTO result = service.sincronizarInspeccionCompleta(dto);
+
+        assertNotNull(result);
+        assertEquals(99L, result.getId());
+        assertEquals("uuid-duplicado", result.getUuidLocal());
+        verify(inspeccionRepository, never()).save(any(Inspeccion.class));
+        verify(inspeccionColmenaRepository, never()).save(any(InspeccionColmena.class));
     }
 
     @Test
@@ -94,7 +169,6 @@ public class ApiarioInspeccionImplementationTest {
                 .id(100L)
                 .inspeccion(inspeccion)
                 .colmena(colmena)
-                .varroa("NO_DETECTADA")
                 .estadoReina("VISTA_Y_SANA")
                 .nivelAlimento("ALTO")
                 .produjoMiel(true)
@@ -106,7 +180,6 @@ public class ApiarioInspeccionImplementationTest {
         InspeccionColmenaDTO dtoInput = InspeccionColmenaDTO.builder()
                 .inspeccionId(1L)
                 .colmenaId(2L)
-                .varroa("NO_DETECTADA")
                 .estadoReina("VISTA_Y_SANA")
                 .nivelAlimento("ALTO")
                 .produjoMiel(true)
@@ -116,7 +189,6 @@ public class ApiarioInspeccionImplementationTest {
         InspeccionColmenaDTO result = service.saveInspeccionColmena(1L, 2L, dtoInput);
 
         assertNotNull(result);
-        assertEquals("NO_DETECTADA", result.getVarroa());
         assertEquals("VISTA_Y_SANA", result.getEstadoReina());
         assertTrue(result.getProdujoMiel());
     }

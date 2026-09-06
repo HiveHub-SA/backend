@@ -46,6 +46,15 @@ public class InspeccionController {
     }
 
     /**
+     * POST /hivehub/inspecciones/sincronizar
+     * Sincroniza un paquete de inspección completa generado en modo offline (US 05).
+     */
+    @PostMapping("/inspecciones/sincronizar")
+    public ResponseEntity<InspeccionDTO> sincronizarInspeccion(@RequestBody InspeccionDTO dto) {
+        return ResponseEntity.ok(inspeccionService.sincronizarInspeccionCompleta(dto));
+    }
+
+    /**
      * PUT /hivehub/inspecciones/{id}/floracion
      * Actualiza la variedad de floración de la inspección (US 35).
      */
@@ -53,6 +62,16 @@ public class InspeccionController {
     public ResponseEntity<InspeccionDTO> updateFloracion(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         String floracion = payload.get("floracion");
         return ResponseEntity.ok(inspeccionService.updateFloracion(id, floracion));
+    }
+
+    /**
+     * PUT /hivehub/inspecciones/{id}/varroa
+     * Actualiza la presencia de varroa en la inspección de apiario (US 43).
+     */
+    @PutMapping("/inspecciones/{id}/varroa")
+    public ResponseEntity<InspeccionDTO> updateVarroa(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        String varroa = payload.get("varroa");
+        return ResponseEntity.ok(inspeccionService.updateVarroa(id, varroa));
     }
 
     /**
