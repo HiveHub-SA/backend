@@ -2,6 +2,7 @@ package com.hivehub.app.vosk;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 public class VoskController {
 
     private final VoskTranscriptionService transcriptionService;
@@ -24,7 +26,6 @@ public class VoskController {
      * Matches the contract already documented in the Angular
      * TranscriptionService (transcription.service.ts):
      *
-     *   POST /api/transcriptions
      *   Content-Type: multipart/form-data
      *   Fields: audio (File, WAV PCM 16-bit mono 16kHz), sampleRate, encoding
      *   200 -> { "transcription": "..." }
