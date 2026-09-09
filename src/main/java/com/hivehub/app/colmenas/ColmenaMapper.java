@@ -18,6 +18,7 @@ public class ColmenaMapper {
                 .name(colmena.getName())
                 .apiarioId(colmena.getApiario() != null ? colmena.getApiario().getId() : null)
                 .createdAt(colmena.getCreatedAt())
+                .tamanoAlza(colmena.getTamanoAlza())
                 .inventarios(colmena.getInventarios() != null
                         ? inventarioMapper.toDTO(colmena.getInventarios())
                         : List.of())

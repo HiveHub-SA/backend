@@ -1,6 +1,7 @@
 package com.hivehub.app.inventario;
 
 import com.hivehub.app.inventario.tipoInventario.TipoInventarioNombre;
+import com.hivehub.app.inventario.tipoInventario.TamanoAlza;
 import lombok.*;
 
 @Data
@@ -12,5 +13,6 @@ public class InventarioResponseDTO {
     private Integer pesoInventario;
     private TipoInventarioNombre tipoNombre;
     private Integer cantidadMarcos;
+    private TamanoAlza tamanoAlza;
     private Long colmenaId;
 }

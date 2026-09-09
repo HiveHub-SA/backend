@@ -2,6 +2,7 @@ package com.hivehub.app.colmenas;
 
 import com.hivehub.app.apiarios.Apiario;
 import com.hivehub.app.inventario.Inventario;
+import com.hivehub.app.inventario.tipoInventario.TamanoAlza;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,6 +32,10 @@ public class Colmena {
     @ManyToOne
     @JoinColumn(name = "apiario", referencedColumnName = "id", nullable = true)
     private Apiario apiario;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tamano_alza")
+    private TamanoAlza tamanoAlza;
 
     @OneToMany(mappedBy = "colmena", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Inventario> inventarios = new ArrayList<>();
