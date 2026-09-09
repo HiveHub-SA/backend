@@ -1,5 +1,6 @@
 package com.hivehub.app.apiarios;
 
+import com.hivehub.app.apiarios.videos.VideoApiario;
 import com.hivehub.app.colmenas.Colmena;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,5 +34,8 @@ public class Apiario {
 
     @OneToMany (mappedBy = "apiario", cascade = CascadeType.ALL,  orphanRemoval = true)
     private List<Colmena> colmenas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "apiario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VideoApiario> videos = new ArrayList<>();
 
 }

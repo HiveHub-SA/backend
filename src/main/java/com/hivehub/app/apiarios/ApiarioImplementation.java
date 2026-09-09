@@ -1,9 +1,13 @@
 package com.hivehub.app.apiarios;
 
+import com.hivehub.app.apiarios.videos.VideoApiario;
+import com.hivehub.app.apiarios.videos.VideoApiarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import jakarta.annotation.PostConstruct;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +17,9 @@ import java.util.List;
 public class ApiarioImplementation implements IApiarioService{
 
     private final IApiarioRepository repository;
+    private final VideoApiarioRepository videoApiarioRepository;
+
+    private static final Path CARPETA_VIDEOS = Path.of("uploads/videos");
 
     @Override
     public List<Apiario> findAll() {
@@ -69,10 +76,26 @@ public class ApiarioImplementation implements IApiarioService{
 
     @Override
     public void delete(long id) {
+        Apiario apiario = this.findById(id);
 
-        if  (this.findById(id) == null) {
-            throw new IllegalArgumentException("Apiario with id " + id + " does not exist.");
-        }
+        // Recopilar rutas de archivos ANTES de la eliminación en cascada
+        List<String> rutasVideos = videoApiarioRepository
+                .findByApiarioIdOrderByCreatedAtDesc(id)
+                .stream()
+                .map(VideoApiario::getFilePath)
+                .toList();
+
+        // Cascade borra los registros de video en DB
         repository.deleteById(id);
+
+        // Limpiar archivos físicos DESPUÉS del éxito en DB
+        for (String ruta : rutasVideos) {
+            try {
+                Files.deleteIfExists(CARPETA_VIDEOS.resolve(ruta));
+            } catch (IOException ignored) {
+                // Best-effort: si no se puede borrar el archivo, no falla la operación
+            }
+        }
     }
 }
+
